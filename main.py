@@ -106,6 +106,7 @@ sub_business_type=getAllSubBusinessType()
 version=getCurrentWeiboVersion()
 version.sort()
 
+
 # grab data from sla and write to excel files with basic chart
 def startGrabWeeklyData(wbm):
 	targetVersion=version[len(version)-3:len(version)]
@@ -129,6 +130,7 @@ def main():
 	startGrabWeeklyData(wbm)
 	startGrabWeeklyAvgData(wbm)
 	wbm.closeWorkbooks() # must close workbook
+
 
 if __name__ == '__main__':
 	main()
