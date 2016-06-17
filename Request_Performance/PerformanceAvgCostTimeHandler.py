@@ -127,14 +127,14 @@ class PerformanceAvgCostTimeHandler(object):
 
 	# insert data sheet by sheetname
 	def __inserAvgToExcel(self,workbook,worksheet,parsedData,count,subtype):
-		insert_instance=InsertUtils(self.filename)
+		insert_instance=InsertUtils()
 		insert_instance.write_avg_data(workbook,worksheet,self.sheetname,parsedData,count,subtype)
 		# insert_instance.plotAvg(workbook,worksheet,self.sheetname,count,len(self.sub_business_type),len(parsedData.get('version')),subtype)		
 		return True
 
 	# insert data sheet by subtype
 	def __inserToExcel(self,workbook,worksheet,parsedData,count,subtype):
-		insert_instance=InsertUtils(self.filename)
+		insert_instance=InsertUtils()
 		insert_instance.write_data(workbook,worksheet,subtype,parsedData,count,self.sheetname)
 		insert_instance.plot(workbook,worksheet,subtype,count,len(parsedData.get('version')),len(parsedData.get('date')),self.sheetname)
 		return True

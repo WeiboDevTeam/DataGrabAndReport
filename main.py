@@ -111,7 +111,7 @@ version.sort()
 def startGrabWeeklyData(wbm):
 	targetVersion=version[len(version)-3:len(version)]
 	for system in systems:
-		fileName = system+'_'+Const.PATH_WEEKLY_DATA
+		fileName = system+'_'+endDay+Const.PATH_WEEKLY_DATA
 		getPerformanceAvgCostTime(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
 		getPerformanceSucRatioTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
 		getPerformanceErroCodeTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
@@ -121,14 +121,14 @@ def startGrabWeeklyAvgData(wbm):
 	# # get recent 6 version data
 	targetVersion=version
 	for system in systems:
-		fileName = system+'_'+Const.PATH_WEEKLY_AVG_DATA
+		fileName = system+'_'+endDay+Const.PATH_WEEKLY_AVG_DATA
 		getPerformanceAvgCostTime(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_AVG_DATA)
 		getPerformanceSucRatioTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_AVG_DATA)
 
 def main():
 	wbm=WorkbookManager.WorkbookManager()
 	startGrabWeeklyData(wbm)
-	startGrabWeeklyAvgData(wbm)
+	# startGrabWeeklyAvgData(wbm)
 	wbm.closeWorkbooks() # must close workbook
 
 
