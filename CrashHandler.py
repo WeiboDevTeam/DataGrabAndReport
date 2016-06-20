@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 from urllib2 import Request,urlopen,URLError,HTTPError
 from Request_Performance import WorkbookManager
 from Request_Performance import InsertUtils
@@ -5,7 +8,7 @@ import httplib,urllib,urllib2,json
 import time
 
 perinterval=24*60*60*1000
-interval=2
+interval=3
 
 localtime="00:00:00"
 timeformat="%Y.%m.%d %H:%M:%S"
@@ -23,11 +26,14 @@ searchdate=time.strftime(searchformat,time.localtime(currenttime/1000))
 host="10.19.0.64"
 port=9200
 logtype="logstash-mweibo-"
-fromvalues=[1066095010,1065195010,1065095010]
-versions=["6.6.0","6.5.1","6.5.0","6.4.2","6.4.1","6.4.0","6.3.1"]
+fromvalues=[1066195010,1066095010,1065195010]
+versions=["6.6.1","6.6.0","6.5.1","6.5.0","6.4.2","6.4.1","6.4.0"]
 fromfield="jsoncontent.from"
 versionfield="jsoncontent.weibo_version"
 
+'''
+构建curl中的查询参数部分
+'''
 def buildQueryString(field,datalist):
 	strquery=""
 	for f in range(0,len(datalist)):
@@ -39,7 +45,9 @@ def buildQueryString(field,datalist):
 def buildVersionIndex():
 	pass
 
-# search data of yesterday need use yesterday's index
+'''
+构建curl中的时间索引
+'''
 def buildIndex(type,currenttime,interval):
 	strindex=type + time.strftime(searchformat,time.localtime(currenttime/1000)) + ","
 	for i in range(1,interval+1):
@@ -62,7 +70,9 @@ def httpRequest(method,host,port,requesturl,uri):
 	res=response.read()
 	return res
 
-# build query
+'''
+构建最近几个版本的Top50crash的查询语句，根据uid的量排序
+'''
 def buildTopCrashQuery():
 	must=[]
 	timestamp={"gte":timefrom,"lte":timeto,"format": "epoch_millis"}
@@ -80,7 +90,9 @@ def buildTopCrashQuery():
 	query["aggs"]={"count_crash":aggs}
 	return query
 
-# build query
+'''
+构建最近三个版本的Top20crash的查询语句
+'''
 def buildRecentlyThreeVersionTopCrashQuery():
 	must=[]
 	timestamp={"gte":timefrom,"lte":timeto,"format": "epoch_millis"}
@@ -103,7 +115,9 @@ def buildRecentlyThreeVersionTopCrashQuery():
 	query["aggs"]={"count_crash":aggs1}
 	return query
 
-# build query
+'''
+构建覆盖微博版本最多的Top1000 的crash查询语句
+'''
 def buildMostVersionCrashQuery():
 	must=[]
 	timestamp={"gte":timefrom,"lte":timeto,"format": "epoch_millis"}
@@ -129,6 +143,9 @@ def buildMostVersionCrashQuery():
 	query["aggs"]={"count_crash":aggs1}
 	return query
 
+'''
+构建最近几个版本每日的crash uid的量的查询语句
+'''
 def buildRecentVersionsCrashQuery(sys):
 	must=[]
 	timestamp={"gte":timefrom,"lte":timeto,"format": "epoch_millis"}
@@ -157,6 +174,9 @@ def buildRecentVersionsCrashQuery(sys):
 	query["aggs"]={"count_crash":aggs}
 	return query
 
+'''
+抓取最近三个版本的Top20crash，根据uid的量排序
+'''
 def getRecenltyThreeVersionsCrashCounts(worksheet):
 	query = buildRecentlyThreeVersionTopCrashQuery()
 	json_string=json.dumps(query)
@@ -188,6 +208,9 @@ def getRecenltyThreeVersionsCrashCounts(worksheet):
 		print json_string
 		print 'result: '+str(json_data)
 
+'''
+抓取最近几个版本的Top50crash的查询语句，根据uid的量排序
+'''
 def getTopCrashInfos(worksheet):
 	query = buildTopCrashQuery()
 	json_string=json.dumps(query)
@@ -213,6 +236,9 @@ def getTopCrashInfos(worksheet):
 		print json_string
 		print 'result: '+str(json_data)
 
+'''
+抓取覆盖微博版本最多的crash，根据uid的量排序
+'''
 def getMostVersionCrashInfos(worksheet):
 	query = buildMostVersionCrashQuery()
 	json_string=json.dumps(query)
@@ -239,7 +265,9 @@ def getMostVersionCrashInfos(worksheet):
 		print json_string
 		print 'result: '+str(json_data)
 	
-
+'''
+抓取最近几个版本每日的crash uid的量，结合DAU，用于对比个版本的crash率
+'''
 def getRecenltyVersionsCrashCounts(sys,worksheet):	
 	query = buildRecentVersionsCrashQuery(sys)
 	json_string=json.dumps(query)
@@ -283,19 +311,28 @@ def copyData(workbookmanager,filename,sheetname,worksheet):
 	return table
 '''
 
+'''
+开始抓取最近几个版本每日crash uids的统计
+'''
 def startCrashVersionCollection(sys,wbm):
-	workbook=wbm.getWorkbook("crash_version_collection_"+searchdate+".xlsx")
+	workbook=wbm.getWorkbook("crash率统计"+searchdate+".xlsx")
 	worksheet_topversioncrash = wbm.addWorksheet(workbook,sys)
 	getRecenltyVersionsCrashCounts(sys,worksheet_topversioncrash)
 
+'''
+开始抓取最近三个／几个版本中Top20／Top50的crash
+'''
 def startTopCrashCollection(sys,wbm):
-	workbook=wbm.getWorkbook("top_crash_collection_"+searchdate+".xlsx")
+	workbook=wbm.getWorkbook("最近三个版本Top20的crash对比分析"+searchdate+".xlsx")
 	worksheet_topcrash = wbm.addWorksheet(workbook,sys)	
 	getRecenltyThreeVersionsCrashCounts(worksheet_topcrash)
 	# getTopCrashInfos(worksheet_topcrash)
 
+'''
+开始抓取覆盖微博版本最多的Top1000的crash
+'''
 def startMostVersionCrashCollection(sys,wbm):
-	workbook=wbm.getWorkbook("most_version_crash_collection_"+searchdate+".xlsx")
+	workbook=wbm.getWorkbook("覆盖微博版本最多的crash统计"+searchdate+".xlsx")
 	worksheet_mostcrash = wbm.addWorksheet(workbook,sys)
 	getMostVersionCrashInfos(worksheet_mostcrash)
 
@@ -303,11 +340,23 @@ systems=['Android',"iphone"]
 
 def main():
 	wbm=WorkbookManager.WorkbookManager()
+
+	'''
+	最近几个版本的crash率统计
+	'''
 	for sys in systems:
 		startCrashVersionCollection(sys,wbm)
-	# startTopCrashCollection("Android",wbm)
-	# table=copyData(wbm,filename,"sheet2",worksheet_topversioncrash)
-	# startMostVersionCrashCollection("Android",wbm)
+
+	'''
+	最近三个版本的Top20 crash的对比统计
+	'''
+	startTopCrashCollection("Android",wbm)
+
+	'''
+	覆盖版本最多的crash统计
+	'''
+	startMostVersionCrashCollection("Android",wbm)
+
 	wbm.closeWorkbooks()
 
 if __name__ == '__main__':
