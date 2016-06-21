@@ -6,6 +6,7 @@ from Request_Performance import WorkbookManager
 from Request_Performance import InsertUtils
 import httplib,urllib,urllib2,json
 import time
+import os,sys
 
 perinterval=24*60*60*1000
 interval=3
@@ -30,6 +31,20 @@ fromvalues=[1066195010,1066095010,1065195010]
 versions=["6.6.1","6.6.0","6.5.1","6.5.0","6.4.2","6.4.1","6.4.0"]
 fromfield="jsoncontent.from"
 versionfield="jsoncontent.weibo_version"
+
+
+
+'''
+获取输出文件夹的路径
+'''
+def getOutputPath():
+	dirname = os.path.abspath(os.path.dirname(sys.argv[0]))
+	path=dirname+'/output/'
+	if os.path.isdir(path)==False:
+		print 'create dir:' + path
+		os.mkdir(path)
+	return path
+
 
 '''
 构建curl中的查询参数部分
@@ -315,7 +330,7 @@ def copyData(workbookmanager,filename,sheetname,worksheet):
 开始抓取最近几个版本每日crash uids的统计
 '''
 def startCrashVersionCollection(sys,wbm):
-	workbook=wbm.getWorkbook("crash率统计"+searchdate+".xlsx")
+	workbook=wbm.getWorkbook(getOutputPath()+"crash率统计"+searchdate+".xlsx")
 	worksheet_topversioncrash = wbm.addWorksheet(workbook,sys)
 	getRecenltyVersionsCrashCounts(sys,worksheet_topversioncrash)
 
@@ -323,7 +338,7 @@ def startCrashVersionCollection(sys,wbm):
 开始抓取最近三个／几个版本中Top20／Top50的crash
 '''
 def startTopCrashCollection(sys,wbm):
-	workbook=wbm.getWorkbook("最近三个版本Top20的crash对比分析"+searchdate+".xlsx")
+	workbook=wbm.getWorkbook(getOutputPath()+"最近三个版本Top20的crash对比分析"+searchdate+".xlsx")
 	worksheet_topcrash = wbm.addWorksheet(workbook,sys)	
 	getRecenltyThreeVersionsCrashCounts(worksheet_topcrash)
 	# getTopCrashInfos(worksheet_topcrash)
@@ -332,7 +347,7 @@ def startTopCrashCollection(sys,wbm):
 开始抓取覆盖微博版本最多的Top1000的crash
 '''
 def startMostVersionCrashCollection(sys,wbm):
-	workbook=wbm.getWorkbook("覆盖微博版本最多的crash统计"+searchdate+".xlsx")
+	workbook=wbm.getWorkbook(getOutputPath()+"覆盖微博版本最多的crash统计"+searchdate+".xlsx")
 	worksheet_mostcrash = wbm.addWorksheet(workbook,sys)
 	getMostVersionCrashInfos(worksheet_mostcrash)
 
