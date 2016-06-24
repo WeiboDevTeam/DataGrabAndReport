@@ -217,7 +217,7 @@ class CrashHandler(object):
 		must.append({"range":{"@timestamp":timestamp}})
 		must.append({"term":{"programname":"mweibo_client_crash"}})
 		must.append({"term":{"jsoncontent.os_type":sys}})
-		must.append({"query_string":{"query":self.buildQueryString(versionfield,versions)}})
+		must.append({"query_string":{"query":self.buildQueryString(versionfield,self.versions)}})
 
 		must_not=[]
 		must_not.append({"query":{"match":{"jsoncontent.subtype":{"query":"anr","type":"phrase"}}}})
@@ -358,6 +358,7 @@ class CrashHandler(object):
 		else:
 			print 'result: '+str(json_data)
 		fromvalues.sort()
+		print fromvalues
 		return fromvalues
 
 	def getLatestFromValue(self,fromvalues):
@@ -590,8 +591,8 @@ class CrashHandler(object):
 		'''
 		最近几个版本的crash率统计
 		'''
-		# for sys in systems:
-		# 	crash_handler.startCrashVersionCollection(sys,wbm)
+		for sys in systems:
+			crash_handler.startCrashVersionCollection(sys,wbm)
 
 		'''
 		影响用户Top20 crash的统计（对比三个版本）

@@ -52,16 +52,16 @@ def grabData():
 	tablelist.append(tableinfo)
 
 	# 抓取最近几版的crash影响用户数	
-	# for i in range(len(crash_handler.systems)):		
-	# 	outputfile=crash_handler.startCrashVersionCollection(crash_handler.systems[i],wbm)
-	# 	tableinfo={}
-	# 	tableinfo['filepath']=outputfile
-	# 	tableinfo['sheet']=i
-	# 	tableinfo['theme']=crash_handler.systems[i]+'端影响用户Top20的crash'
-	# 	tableinfo['title']='<th>crash内容</th><th>影响用户数</th>'
-	# 	tablelist.append(tableinfo)
+	for i in range(len(crash_handler.systems)):		
+		outputfile=crash_handler.startCrashVersionCollection(crash_handler.systems[i],wbm)
+		tableinfo={}
+		tableinfo['filepath']=outputfile
+		tableinfo['sheet']=i
+		tableinfo['theme']=crash_handler.systems[i]+'端影响用户Top20的crash'
+		tableinfo['title']='<th>crash内容</th><th>影响用户数</th>'
+		tablelist.append(tableinfo)
 
-	# wbm.closeWorkbooks()
+	wbm.closeWorkbooks()
 
 	return tablelist
 
