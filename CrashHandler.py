@@ -10,7 +10,7 @@ import os,sys,re,difflib
 import CrashHandler
 
 perinterval=24*60*60*1000
-interval=2
+interval=1
 
 localtime="00:00:00"
 timeformat="%Y.%m.%d %H:%M:%S"
@@ -427,6 +427,8 @@ class CrashHandler(object):
 				data.append(item.get('key'))
 				sub_buckets = item.get('date').get('buckets')		
 				for i in range(0,len(sub_buckets)):
+					if i >= self.interval:
+						break
 					data.append(sub_buckets[i].get('count_uid').get('value'))
 				print data
 				utils.write_crash_data_with_yxis(worksheet,data,header,index,0)

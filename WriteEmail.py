@@ -25,13 +25,13 @@ class WriteEmail(object):
 		content=''
 		for table in tablelist:
 			# 表格外的标题
-			out_title=str(count)+'.'+table.get('theme')
-			table_element='<table border="1" cellspacing="0" cellpadding="3" bordercolor="#000000" width="1000" align="left" >'			
+			out_title='<div>'+str(count)+'.'+table.get('theme')+'</div>'
+			table_element='<div><table border="1" cellspacing="0" cellpadding="3" bordercolor="#000000" width="1000" align="left" >'			
 			# 表格里的标题
 			table_title=self.getTableTitle(table.get('title'))
 			# 表格里的数据
 			data=self.buildTableContent(table.get('filepath'),table.get('sheet'))
-			content=content+out_title+table_element+table_title+data+'</table>'
+			content=content+out_title+table_element+table_title+data+'</div></table>'
 			count=count+1
 		return content
 
