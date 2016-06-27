@@ -6,25 +6,10 @@ import WriteEmail
 import CrashHandler
 from Request_Performance import WorkbookManager
 
-'''
-每天凌晨两点执行
-'''
-INTERVAL_HOUR = 2
-SECONDS_PER_INTERVAL=(INTERVAL_HOUR+1)*60*60
-
 def doTask():
 	print "do timer task"
 	tablelist=grabData()
 	sendMail(tablelist)
-
-def getSleepSeconds():
-	curTime=datetime.now()
-	desTime = curTime.replace(hour=23, minute=0, second=0, microsecond=0)
-	delta = desTime - curTime
-	skipSeconds = SECONDS_PER_INTERVAL + delta.total_seconds()
-	print curTime
-	print delta
-	return skipSeconds
 
 def sendMail(tablelist):
 	writeEmail=WriteEmail.WriteEmail()
@@ -52,6 +37,7 @@ def grabData():
 
 	# 抓取最近一版Top20的crash
 
+
 	# 影响用户深度Top20的crash统计
 	outputfile=crash_handler.startCrashInfluenceDepthCollection("Android",wbm)
 	print outputfile
@@ -67,14 +53,6 @@ def grabData():
 	return tablelist
 
 def main():
-	print getSleepSeconds()
-	# i=1
-	# while i<=5:
-	# 	print datetime.now()
-	# 	doTask()
-	# 	i+=1
-	# 	time.sleep(2)
-	# print 'done!'
 	doTask()
 
 if __name__ == '__main__':

@@ -12,8 +12,8 @@ class WriteEmail(object):
 
 	# 编辑邮件正文
 	def getMailContent(self,tablelist):
-		header='<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /></head>'
-		body='<body text="#000000">'
+		header='<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/></head>'
+		body='<body>'
 		content=self.buildMailContent(tablelist)
 		tail='</body></html>'
 		mail=header+body+content+tail
@@ -25,13 +25,13 @@ class WriteEmail(object):
 		content=''
 		for table in tablelist:
 			# 表格外的标题
-			out_title='<div>'+str(count)+'.'+table.get('theme')+'</div>'
-			table_element='<div><table border="1" cellspacing="0" cellpadding="3" bordercolor="#000000" width="1000" align="left" >'			
+			header='<h4>'+str(count)+'.'+table.get('theme')+'</h4>'
+			table_tag='<table border="1" cellspacing="0" cellpadding="3">'			
 			# 表格里的标题
 			table_title=self.getTableTitle(table.get('title'))
 			# 表格里的数据
 			data=self.buildTableContent(table.get('filepath'),table.get('sheet'))
-			content=content+out_title+table_element+table_title+data+'</div></table>'
+			content=content+header+table_tag+table_title+data+'</table>'
 			count=count+1
 		return content
 
@@ -48,9 +48,9 @@ class WriteEmail(object):
 		content=''
 		book=xlrd.open_workbook(filepath)
 		sheet=book.sheet_by_index(0)
-		nrows=sheet.nrows-1
+		nrows=sheet.nrows
 		ncols=sheet.ncols
-		for i in range(1,nrows+1):
+		for i in range(0,nrows):
 			td=''
 			for j in range(ncols):
 				cellData=sheet.cell_value(i,j)				
@@ -91,7 +91,15 @@ class WriteEmail(object):
 		data=[]
 		ncols=table.ncols
 		for i in range(1,table.nrows):
-			data.append(table.row_values(i))
+			row=[]
+			for j in range(0,ncols):
+				# 解决excel中保存的int值在读取时会自动转为float格式的问题
+				# ctype :0 empty,1 string, 2 number, 3 date, 4 boolean, 5 error
+				if (table.cell(i,j).ctype==2 and int(table.cell(i,j).value)/1.0==table.cell(i,j).value):
+					row.append(int(table.cell(i,j).value))
+				else:
+					row.append(table.cell(i,j).value)
+			data.append(row)
 		data=sorted(data,key=lambda x:x[ncols-1],reverse=True)
 		return data
 

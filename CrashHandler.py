@@ -414,7 +414,7 @@ class CrashHandler(object):
 			if len(buckets)>0:
 				sub_buckets=buckets[0]
 				dates=sub_buckets.get('date').get('buckets')
-				for i in range (0,len(dates)):
+				for i in range (0,self.interval):
 					ltime=time.localtime(dates[i].get('key')/1000)
 					timestr=time.strftime(searchformat,ltime)
 					header.append(timestr)	
@@ -453,7 +453,6 @@ class CrashHandler(object):
 			data_list={}
 			for item in buckets:
 				uid=item.get('key')
-				print 'uid:'+uid
 				crash_reson=item.get('crash_reson').get('buckets')
 				for reson in crash_reson:
 					crash_content=reson.get('crash_content').get('buckets')
@@ -507,7 +506,6 @@ class CrashHandler(object):
 	'''
 	def isSimilarCrashReason(self,str1,str2):
 		s=difflib.SequenceMatcher(None,str1,str2)
-		print "similarity ratio:" + str(s.ratio())
 		if s.ratio()> 0.9:		
 			return True
 		else:
@@ -517,7 +515,6 @@ class CrashHandler(object):
 	进行相似度计算后，根据结果进行crash次数累加
 	'''
 	def updateMatchedList(self,data_list,uid,content,count):
-		print 'count:' + str(count)
 		if data_list.get(uid)==None:
 			dic={}
 			dic[content]={"counts":count}
@@ -532,9 +529,7 @@ class CrashHandler(object):
 					similar_reason = reason
 					break
 			if similar:
-				print 'old count:' + str(dic.get(similar_reason).get('counts'))
-				count=dic.get(similar_reason).get('counts')+count	
-				print 'updated count :' + str(count)			
+				count=dic.get(similar_reason).get('counts')+count			
 
 			data_list[uid][similar_reason]={"counts":count}
 			
