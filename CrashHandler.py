@@ -11,6 +11,7 @@ import CrashHandler
 
 perinterval=24*60*60*1000
 interval=1
+versionsNum=10
 
 localtime="00:00:00"
 timeformat="%Y.%m.%d %H:%M:%S"
@@ -18,11 +19,6 @@ searchformat="%Y.%m.%d"
 
 localdate=time.strftime(searchformat,time.localtime())
 to=time.mktime(time.strptime(localdate+" "+localtime,timeformat))
-timeto=int(round(to*1000))
-timefrom=timeto-perinterval*interval
-
-currenttime=timeto-interval
-searchdate=time.strftime(searchformat,time.localtime(currenttime/1000))
 
 host="10.19.0.64"
 port=9200
@@ -32,16 +28,18 @@ versions=["6.6.1","6.6.0","6.5.1","6.5.0","6.4.2","6.4.1","6.4.0"]
 fromfield="jsoncontent.from"
 versionfield="jsoncontent.weibo_version"
 systems=['Android',"iphone"]
-versionsNum=6
+
 
 class CrashHandler(object):
 	def __init__(self):
-		self.versions=["6.6.1","6.6.0","6.5.1","6.5.0","6.4.2","6.4.1","6.4.0"]
-		self.latesfromvalue = ""
-		self.timeto=timeto
-		self.timefrom=timefrom
-		self.interval=interval
+		self.interval=interval		
+		self.timeto=int(round(to*1000))
+		self.timefrom=self.timeto-perinterval*self.interval
+		self.currenttime=self.timeto-self.interval
+		self.searchdate=time.strftime(searchformat,time.localtime(self.currenttime/1000))
+		self.versions=versions	
 		self.systems=systems
+		self.version='6.6.1'		
 
 	'''
 	获取输出文件夹的路径
@@ -99,13 +97,13 @@ class CrashHandler(object):
 	'''
 	def buildTopVersionFromQuery(self):
 		must=[]
-		timestamp={"gte":timefrom,"lte":timeto,"format": "epoch_millis"}
+		timestamp={"gte":self.timefrom,"lte":self.timeto,"format": "epoch_millis"}
 		must.append({"range":{"@timestamp":timestamp}})
 		must.append({"term":{"programname":"mweibo_client_crash"}})
 		must.append({"term":{"jsoncontent.os_type":"Android"}})
 
 		aggs={}
-		aggs["terms"]={"size":versionsNum,"field":"jsoncontent.from"}
+		aggs["terms"]={"size":versionsNum,"field":fromfield}
 		aggs["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}}}
 
 		query={}
@@ -113,12 +111,32 @@ class CrashHandler(object):
 		query["aggs"]={"fromvalues":aggs}
 		return query
 
+	# 构建某个版本Top50的crash的查询语句，根据uid的量排序
+	def buildSingleVersionTopCrashQuery(self,fromvalue):
+		must=[]
+		fromvalues=[]
+		fromvalues.append(fromvalue)
+		timestamp={"gte":self.timefrom,"lte":self.timeto,"format": "epoch_millis"}
+		must.append({"range":{"@timestamp":timestamp}})
+		must.append({"term":{"programname":"mweibo_client_crash"}})
+		must.append({"term":{"jsoncontent.os_type":"Android"}})
+		must.append({"query_string":{"query":self.buildQueryString(fromfield,fromvalues)}})
+
+		aggs={}
+		aggs["terms"]={"size":50,"field":"jsoncontent.content"}
+		aggs["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}},"reason":{"terms":{"field":"jsoncontent.reson","size":5},"aggs":{"2":{"cardinality":{"field":"jsoncontent.uid"}}}}}
+
+		query={}
+		query["query"]={"filtered":{"filter":{"bool":{"must":must}}}}
+		query["aggs"]={"count_crash":aggs}
+		return query
+
 	'''
 	构建最近几个版本的Top50crash的查询语句，根据uid的量排序
 	'''
 	def buildTopCrashQuery(self):
 		must=[]
-		timestamp={"gte":timefrom,"lte":timeto,"format": "epoch_millis"}
+		timestamp={"gte":self.timefrom,"lte":self.timeto,"format": "epoch_millis"}
 		must.append({"range":{"@timestamp":timestamp}})
 		must.append({"term":{"programname":"mweibo_client_crash"}})
 		must.append({"term":{"jsoncontent.os_type":"Android"}})
@@ -140,7 +158,7 @@ class CrashHandler(object):
 		versions=[]
 		versions.append(version)
 		must=[]
-		timestamp={"gte":timefrom,"lte":timeto,"format": "epoch_millis"}
+		timestamp={"gte":self.timefrom,"lte":self.timeto,"format": "epoch_millis"}
 		must.append({"range":{"@timestamp":timestamp}})
 		must.append({"term":{"programname":"mweibo_client_crash"}})
 		must.append({"term":{"jsoncontent.os_type":"Android"}})
@@ -160,7 +178,7 @@ class CrashHandler(object):
 	'''
 	def buildRecentlyThreeVersionTopCrashQuery(self):
 		must=[]
-		timestamp={"gte":timefrom,"lte":timeto,"format": "epoch_millis"}
+		timestamp={"gte":self.timefrom,"lte":self.timeto,"format": "epoch_millis"}
 		must.append({"range":{"@timestamp":timestamp}})
 		must.append({"term":{"programname":"mweibo_client_crash"}})
 		must.append({"term":{"jsoncontent.os_type":"Android"}})
@@ -185,7 +203,7 @@ class CrashHandler(object):
 	'''
 	def buildMostVersionCrashQuery(self):
 		must=[]
-		timestamp={"gte":timefrom,"lte":timeto,"format": "epoch_millis"}
+		timestamp={"gte":self.timefrom,"lte":self.timeto,"format": "epoch_millis"}
 		must.append({"range":{"@timestamp":timestamp}})
 		must.append({"term":{"programname":"mweibo_client_crash"}})
 		must.append({"term":{"jsoncontent.os_type":"Android"}})
@@ -213,7 +231,7 @@ class CrashHandler(object):
 	'''
 	def buildRecentVersionsCrashQuery(self,sys):
 		must=[]
-		timestamp={"gte":timefrom,"lte":timeto,"format": "epoch_millis"}
+		timestamp={"gte":self.timefrom,"lte":self.timeto,"format": "epoch_millis"}
 		must.append({"range":{"@timestamp":timestamp}})
 		must.append({"term":{"programname":"mweibo_client_crash"}})
 		must.append({"term":{"jsoncontent.os_type":sys}})
@@ -226,7 +244,7 @@ class CrashHandler(object):
 		filtered['filter']={"bool":{"must":must,"must_not":must_not}}	
 
 		date={}
-		extended_bounds={"min": timefrom,"max": timeto} 
+		extended_bounds={"min":self.timefrom,"max":self.timeto} 
 		date["date_histogram"]={"field": "@timestamp","interval": "1d","time_zone": "Asia/Shanghai", "min_doc_count": 1,"extended_bounds":extended_bounds}
 		date["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}}}
 
@@ -243,13 +261,15 @@ class CrashHandler(object):
 	'''
 	构建Crash影响用户深度查询语句，top20的影响用户，每个用户top5的crash内容
 	'''
-	def buildCrashInfluenceDepthQuery(self):
+	def buildCrashInfluenceDepthQuery(self,fromvalue):
 		must=[]
-		timestamp={"gte":timefrom,"lte":timeto,"format": "epoch_millis"}
+		fromvalues=[]
+		fromvalues.append(fromvalue)
+		timestamp={"gte":self.timefrom,"lte":self.timeto,"format": "epoch_millis"}
 		must.append({"range":{"@timestamp":timestamp}})
 		must.append({"term":{"programname":"mweibo_client_crash"}})
 		must.append({"term":{"jsoncontent.os_type":"Android"}})
-		must.append({"query_string":{"query":self.buildQueryString(fromfield,['1066195010'])}})
+		must.append({"query_string":{"query":self.buildQueryString(fromfield,fromvalues)}})
 
 		aggs1={}
 		aggs1["terms"]={"size":20,"field":"jsoncontent.uid"}
@@ -272,7 +292,7 @@ class CrashHandler(object):
 	def getRecenltyThreeVersionsCrashCounts(self,worksheet):
 		query = self.buildRecentlyThreeVersionTopCrashQuery()
 		json_string=json.dumps(query)
-		res = self.httpRequest("POST",host,port,self.buildUri(logtype,currenttime,self.interval),json_string)
+		res = self.httpRequest("POST",host,port,self.buildUri(logtype,self.currenttime,self.interval),json_string)
 		json_data=json.loads(res)
 		print json_data
 		
@@ -301,12 +321,47 @@ class CrashHandler(object):
 			print 'result: '+str(json_data)
 
 	'''
-	抓取最近几个版本的Top50crash的查询语句，根据uid的量排序
+	抓取某个版本的Top50的crash，根据uid的量排序
+	'''
+	def getSingleVersionTopCrashInfos(self,worksheet,fromvalue):
+		query = self.buildSingleVersionTopCrashQuery(fromvalue)
+		json_string=json.dumps(query)
+		res = self.httpRequest("POST",host,port,self.buildUri(logtype,self.currenttime,self.interval),json_string)
+		json_data=json.loads(res)
+		
+		if json_data.get('aggregations')!=None:
+			buckets= json_data['aggregations']['count_crash']['buckets']
+			header=['crash content','counts']		
+
+			data_list={}
+			for item in buckets:
+				content=item.get('key')
+				crash_resons=item.get('reason').get('buckets')
+				for reson in crash_resons:
+					# 判断crash的content中是否包含crash的原因
+					if reson.get('key') in content:
+						reson_content=content
+					else:
+						reson_content=reson.get('key')+'\n'+content
+					# 过滤dexpathlist内容，这部分对相似度计算有影响
+					filter_content=self.filterCrashContent(reson_content)
+					if filter_content=="No Match!":
+						filter_content = reson_content
+
+					self.updateMatchedList(data_list,'uid',filter_content,item.get('doc_count'))
+
+			self.writeSortedToExcel(worksheet,header,self.sortDataList(data_list,len(header)-1))
+		else:
+			print 'result: '+str(json_data)
+
+
+	'''
+	抓取最近几个版本的Top50的crash，根据uid的量排序
 	'''
 	def getTopCrashInfos(self,worksheet):
 		query = self.buildTopCrashQuery()
 		json_string=json.dumps(query)
-		res = self.httpRequest("POST",host,port,self.buildUri(logtype,currenttime,self.interval),json_string)
+		res = self.httpRequest("POST",host,port,self.buildUri(logtype,self.currenttime,self.interval),json_string)
 		json_data=json.loads(res)
 		
 		if json_data.get('aggregations')!=None:
@@ -336,9 +391,8 @@ class CrashHandler(object):
 		query = self.buildTopVersionFromQuery()
 		print query
 		json_string=json.dumps(query)
-		res = self.httpRequest("POST",host,port,self.buildUri(logtype,currenttime,self.interval),json_string)
+		res = self.httpRequest("POST",host,port,self.buildUri(logtype,self.currenttime,self.interval),json_string)
 		json_data=json.loads(res)
-		print str(json_data)
 		
 		if json_data.get('aggregations')!=None:
 			buckets= json_data['aggregations']['fromvalues']['buckets']
@@ -358,14 +412,25 @@ class CrashHandler(object):
 		else:
 			print 'result: '+str(json_data)
 		fromvalues.sort()
-		print fromvalues
 		return fromvalues
 
-	def getLatestFromValue(self,fromvalues):
+	# index代表版本的顺序，例如1代表最新的版本
+	def getFromValue(self,fromvalues,index):
 		size = len(fromvalues)
-		if size>0:
-			return fromvalues[size-1]
+		if size>=index:
+			return fromvalues[size-index]
 		return ''
+
+	# index代表版本的个数，例如6代表最新的6版本
+	def getFromValues(self,fromvalues,num):
+		values=[]
+		size = len(fromvalues)
+		if size>=num:
+			for i in range(1,num+1):
+				values.append(fromvalues[size-i])
+		else:
+			print 'from counts bigger than Max fromvalues counts!!'
+		return values
 
 	'''
 	抓取覆盖微博版本最多的crash，根据uid的量排序
@@ -373,7 +438,7 @@ class CrashHandler(object):
 	def getMostVersionCrashInfos(self,worksheet):
 		query = self.buildMostVersionCrashQuery()
 		json_string=json.dumps(query)
-		res = self.httpRequest("POST",host,port,self.buildUri(logtype,currenttime,self.interval),json_string)
+		res = self.httpRequest("POST",host,port,self.buildUri(logtype,self.currenttime,self.interval),json_string)
 		json_data=json.loads(res)
 		
 		if json_data.get('aggregations')!=None:
@@ -402,7 +467,7 @@ class CrashHandler(object):
 	def getRecenltyVersionsCrashCounts(self,sys,worksheet):	
 		query = self.buildRecentVersionsCrashQuery(sys)
 		json_string=json.dumps(query)
-		res = self.httpRequest("POST",host,port,self.buildUri(logtype,currenttime,self.interval),json_string)
+		res = self.httpRequest("POST",host,port,self.buildUri(logtype,self.currenttime,self.interval),json_string)
 		json_data=json.loads(res)
 		
 		if json_data.get('aggregations')!=None:
@@ -440,10 +505,10 @@ class CrashHandler(object):
 	'''
 	抓取crash影响用户深度数据，Top20的uid
 	'''
-	def getCrashInfluenceDepthQuery(self,worksheet):
-		query = self.buildCrashInfluenceDepthQuery()
+	def getCrashInfluenceDepthQuery(self,worksheet,fromvalue):
+		query = self.buildCrashInfluenceDepthQuery(fromvalue)
 		json_string=json.dumps(query)
-		res = self.httpRequest("POST",host,port,self.buildUri(logtype,currenttime,self.interval),json_string)
+		res = self.httpRequest("POST",host,port,self.buildUri(logtype,self.currenttime,self.interval),json_string)
 		json_data=json.loads(res)
 		
 		if json_data.get('aggregations')!=None:
@@ -468,9 +533,36 @@ class CrashHandler(object):
 							filter_content = reson_content
 						self.updateMatchedList(data_list,uid,filter_content,content.get('doc_count'))
 
-			self.writeToExcel(worksheet,header,data_list)
+			self.writeSortedToExcel(worksheet,header,self.sortDataList(data_list,len(header)-1))
 		else:
 			print 'result: '+str(json_data)
+
+	'''
+	对列表做排序,制定列进行降序排序
+	'''
+	def sortDataList(self,data_list,sort_index):
+		datalist=[]
+		for data in data_list.keys():
+			crash_info = data_list.get(data)
+			for key in crash_info.keys():
+				row=[]				
+				if data != 'uid':
+					row.append(data)
+				row.append(key)
+				row.append(crash_info.get(key).get('counts'))
+				datalist.append(row)
+		return sorted(datalist,key=lambda x:x[sort_index],reverse=True)
+
+	'''
+	将已排序的数据写入excel表格
+	'''
+	def writeSortedToExcel(self,worksheet,header,data_list):
+		utils=InsertUtils.InsertUtils()		
+		utils.write_header(worksheet,0,0,header)
+		index = 1			
+		for data in data_list:
+			utils.write_crash_data_with_yxis(worksheet,data,header,index,0)
+			index += 1
 
 	'''
 	将缓存在list中的数据写入excel表格
@@ -483,7 +575,8 @@ class CrashHandler(object):
 			crash_info = data_list.get(data)
 			for key in crash_info.keys():
 				row=[]
-				row.append(data)
+				if data != 'uid':
+					row.append(data)
 				row.append(key)
 				row.append(crash_info.get(key).get('counts'))
 				utils.write_crash_data_with_yxis(worksheet,row,header,index,0)
@@ -545,7 +638,7 @@ class CrashHandler(object):
 	开始抓取最近几个版本每日crash uids的统计
 	'''
 	def startCrashVersionCollection(self,sys,wbm):
-		path=self.getOutputPath()+"crash率统计"+searchdate+".xlsx"
+		path=self.getOutputPath()+"crash率统计"+self.searchdate+".xlsx"
 		workbook=wbm.getWorkbook(path)
 		worksheet_topversioncrash = wbm.addWorksheet(workbook,sys)
 		self.getRecenltyVersionsCrashCounts(sys,worksheet_topversioncrash)
@@ -555,7 +648,7 @@ class CrashHandler(object):
 	开始抓取最近三个／几个版本中Top20／Top50的crash
 	'''
 	def startTopCrashCollection(self,sys,wbm):
-		workbook=wbm.getWorkbook(self.getOutputPath()+"最近三个版本Top20的crash对比分析"+searchdate+".xlsx")
+		workbook=wbm.getWorkbook(self.getOutputPath()+"最近三个版本Top20的crash对比分析"+self.searchdate+".xlsx")
 		worksheet_topcrash = wbm.addWorksheet(workbook,sys)	
 		self.getRecenltyThreeVersionsCrashCounts(worksheet_topcrash)
 		# self.getTopCrashInfos(worksheet_topcrash)
@@ -564,49 +657,26 @@ class CrashHandler(object):
 	开始抓取覆盖微博版本最多的Top1000的crash
 	'''
 	def startMostVersionCrashCollection(self,sys,wbm):
-		workbook=wbm.getWorkbook(self.getOutputPath()+"覆盖微博版本最多的crash统计"+searchdate+".xlsx")
+		workbook=wbm.getWorkbook(self.getOutputPath()+"覆盖微博版本最多的crash统计"+self.searchdate+".xlsx")
 		worksheet_mostcrash = wbm.addWorksheet(workbook,sys)
 		self.getMostVersionCrashInfos(worksheet_mostcrash)
 
 	'''
 	开始抓取影响用户深度Top20的crash及uid
 	'''
-	def startCrashInfluenceDepthCollection(self,sys,wbm):
-		output=self.getOutputPath()+"crash影响用户深度统计"+searchdate+".xlsx"
+	def startCrashInfluenceDepthCollection(self,sys,wbm,fromvalue):
+		output=self.getOutputPath()+"crash影响用户深度统计"+self.searchdate+".xlsx"
 		workbook=wbm.getWorkbook(output)
 		worksheet = wbm.addWorksheet(workbook,sys)
-		self.getCrashInfluenceDepthQuery(worksheet)	
+		self.getCrashInfluenceDepthQuery(worksheet,fromvalue)	
 		return output
 
-	def main():
-		crash_handler=CrashHandler.CrashHandler()
-		print 'timefrom:' + str(timefrom)
-		print 'timeto:' + str(timeto)
-		print crash_handler.getLatestFromValue(crash_handler.getTopVersionFromvalues())
-		wbm=WorkbookManager.WorkbookManager()
-
-		'''
-		最近几个版本的crash率统计
-		'''
-		for sys in systems:
-			crash_handler.startCrashVersionCollection(sys,wbm)
-
-		'''
-		影响用户Top20 crash的统计（对比三个版本）
-		'''
-		# crash_handler.startTopCrashCollection("Android",wbm)
-
-		# '''
-		# 影响微博版本最多的crash统计
-		# '''
-		# crash_handler.startMostVersionCrashCollection("Android",wbm)
-
-		'''
-		影响用户深度Top20的crash统计
-		'''
-		# crash_handler.startCrashInfluenceDepthCollection("Android",wbm)
-
-		wbm.closeWorkbooks()
-
-	if __name__ == '__main__':
-		main()
+	'''
+	开始抓取from值＝fromvalue的Top50的crash
+	'''
+	def startSingleVersionTopCrashCollection(self,sys,wbm,fromvalue):
+		output=self.getOutputPath()+"Top50的crash统计"+self.searchdate+".xlsx"
+		workbook=wbm.getWorkbook(output)
+		worksheet = wbm.addWorksheet(workbook,sys)
+		self.getSingleVersionTopCrashInfos(worksheet,fromvalue)	
+		return output

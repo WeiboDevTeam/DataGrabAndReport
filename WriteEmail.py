@@ -69,8 +69,8 @@ class WriteEmail(object):
 	def buildTableContent(self,filepath,sheet):
 		data=self.readAndSortData(filepath,sheet)
 		content=''
-		if(len(data)>20):
-			number=20
+		if(len(data)>10):
+			number=10
 		else:
 			number=len(data)
 		for i in range(0,number):
