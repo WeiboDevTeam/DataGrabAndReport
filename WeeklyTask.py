@@ -6,6 +6,9 @@ import WriteEmail
 import CrashHandler
 from Request_Performance import WorkbookManager
 
+# 定义摘取的记录条数
+top_number=20
+
 def doTask():
 	print "do timer task"
 	tablelist=grabData()
@@ -13,7 +16,7 @@ def doTask():
 
 def sendMail(tablelist):
 	writeEmail=WriteEmail.WriteEmail()
-	content=writeEmail.getMailContent(tablelist)
+	content=writeEmail.getMailContent(tablelist,top_number)
 	writeEmail.mailSend(content)
 
 def grabData():
@@ -38,32 +41,23 @@ def grabData():
 
 	tablelist=[]	
 
-	# 抓取最近6版的crash影响用户数	
-	for i in range(len(CrashHandler.systems)):		
-		outputfile=crash_handler.startCrashUidsCollectionWithVersions(CrashHandler.systems[i],wbm,versions)
-		tableinfo={}
-		tableinfo['filepath']=outputfile
-		tableinfo['sheet']=i
-		tableinfo['theme']=CrashHandler.systems[i]+'端crash用户数统计('+crash_handler.searchdate+')'
-		tableinfo['title']=['微博版本','影响用户数']
-		tablelist.append(tableinfo)
-
-	# 抓取最近一版Top20的crash
-	outputfile2=crash_handler.startCrashCollectionWithFromvalue("Android",wbm,latest_from)
+	# 抓取最近2版top_number的crash
+	two_versions=crash_handler.getValues(fromvalues,2)
+	outputfile2=crash_handler.startTopCrashCollectionWithFromValues("Android",wbm,two_versions)
 	tableinfo2={}
 	tableinfo2['filepath']=outputfile2
 	tableinfo2['sheet']=0
-	tableinfo2['theme']='Android端Top10的crash('+crash_handler.searchdate+')'
-	tableinfo2['title']=['crash内容','影响用户数']
+	tableinfo2['theme']='Android端Top'+str(top_number)+'的crash('+crash_handler.searchdate+')'
+	tableinfo2['title']=['crash内容',str(two_versions[1]),str(two_versions[0])]
 	tablelist.append(tableinfo2)
 
-	# 影响用户深度Top20的crash统计
-	outputfile=crash_handler.startCrashInfluenceDCollectionWithFromvalue("Android",wbm,latest_from)
+	# 覆盖版本数top_number的crash
+	outputfile=crash_handler.startCrashCoverageCollectionWithVersions("Android",wbm,versions)
 	tableinfo={}
 	tableinfo['filepath']=outputfile
 	tableinfo['sheet']=0
-	tableinfo['theme']='Android影响用户深度Top10的crash('+crash_handler.searchdate+')'
-	tableinfo['title']=['用户uid','crash内容','crash次数']
+	tableinfo['theme']='Android端影响版本数Top'+str(top_number)+'的crash('+crash_handler.searchdate+')'
+	tableinfo['title']=['crash内容','影响版本数','影响用户数']
 	tablelist.append(tableinfo)
 
 	wbm.closeWorkbooks()

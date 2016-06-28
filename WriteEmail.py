@@ -11,16 +11,16 @@ import WriteEmail
 class WriteEmail(object):
 
 	# 编辑邮件正文
-	def getMailContent(self,tablelist):
+	def getMailContent(self,tablelist,num):
 		header='<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/></head>'
 		body='<body>'
-		content=self.buildMailContent(tablelist)
+		content=self.buildMailContent(tablelist,num)
 		tail='</body></html>'
 		mail=header+body+content+tail
 		return mail
 
 	# 构建邮件正文内容
-	def buildMailContent(self,tablelist):
+	def buildMailContent(self,tablelist,num):
 		count=1
 		content=''
 		for table in tablelist:
@@ -33,7 +33,7 @@ class WriteEmail(object):
 			for i in range(0,len(table_title)):
 				title=title+'<th>'+table_title[i]+'</th>'
 			# 表格里的数据
-			data=self.buildTableContent(table.get('filepath'),table.get('sheet'))
+			data=self.buildTableContent(table.get('filepath'),table.get('sheet'),num)
 			content=content+header+table_tag+self.getTableTitle(title)+data+'</table>'
 			count=count+1
 		return content
@@ -69,11 +69,11 @@ class WriteEmail(object):
 		return content
 
 	# 根据排序后的内容选取Top20的数据构建表格内容
-	def buildTableContent(self,filepath,sheet):
+	def buildTableContent(self,filepath,sheet,num):
 		data=self.readAndSortData(filepath,sheet)
 		content=''
-		if(len(data)>10):
-			number=10
+		if(len(data)>num):
+			number=num
 		else:
 			number=len(data)
 		for i in range(0,number):

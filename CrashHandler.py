@@ -155,7 +155,7 @@ class CrashHandler(object):
 		return query
 
 	'''
-	构建多个版本下（版本的from值包含在fromvalues，最多三个版本）Top20crash的查询语句
+	构建多个版本下（版本的from值包含在fromvalues）Top20crash的查询语句
 	'''
 	def buildTopCrashQueryWithFromValues(self,sys,fromvalues):
 		must= self.buildCurlMustField(sys,fromfield,fromvalues)
@@ -164,7 +164,7 @@ class CrashHandler(object):
 		aggs1["terms"]={"size":20,"field":"jsoncontent.reson"}
 
 		aggs2={}
-		aggs2["terms"]={"field":fromfield,"size": 3}
+		aggs2["terms"]={"field":fromfield,"size": len(fromvalues)}
 		aggs2["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}}}
 
 		aggs1["aggs"]={"aggs2":aggs2}
@@ -198,7 +198,7 @@ class CrashHandler(object):
 		return query
 
 	'''
-	构建（版本的version包含在verions中，最多7个版本）每日的crash uid的量的查询语句
+	构建（版本的version包含在verions中）每日的crash uid的量的查询语句
 	'''
 	def buildCrashUidsQueryWithVersions(self,sys,versions):
 		must=self.buildCurlMustField(sys,versionfield,versions)
@@ -215,7 +215,7 @@ class CrashHandler(object):
 		date["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}}}
 
 		aggs={}
-		aggs["terms"]={"size":7,"field":versionfield}
+		aggs["terms"]={"size":len(versions),"field":versionfield}
 		aggs["aggs"]={"date":date}
 
 		query={}
@@ -262,8 +262,10 @@ class CrashHandler(object):
 			utils.write_header(worksheet,0,0,header)
 			index = 1
 			for item in buckets:
-				data=['null',0,0,0]
-				data[0]=item.get('key')
+				data=[]
+				data.append(item.get('key'))
+				for i in range(0,len(fromvalues)):
+					data.append(0)
 				datalist=item.get('aggs2').get('buckets')
 				for temp in datalist:
 					version=temp.get('key')
@@ -565,11 +567,11 @@ class CrashHandler(object):
 	开始抓取version包含在versions中的各版本每日crash uids量，每天抓取
 	'''
 	def startCrashUidsCollectionWithVersions(self,sys,wbm,versions):
-		path=self.getOutputPath()+"crash率统计"+self.searchdate+".xlsx"
-		workbook=wbm.getWorkbook(path)
+		output=self.getOutputPath()+"crash率统计"+self.searchdate+".xlsx"
+		workbook=wbm.getWorkbook(output)
 		worksheet_topversioncrash = wbm.addWorksheet(workbook,sys)
 		self.getCrashUidsWithVersions(sys,worksheet_topversioncrash,versions)
-		return path
+		return output
 
 	'''
 	开始抓取from值包含在fromvalues的微博版本的Top50的crash，每周抓取
