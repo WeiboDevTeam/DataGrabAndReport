@@ -45,7 +45,7 @@ def grabData():
 		tableinfo['filepath']=outputfile
 		tableinfo['sheet']=i
 		tableinfo['theme']=CrashHandler.systems[i]+'端crash用户数统计('+crash_handler.searchdate+')'
-		tableinfo['title']='<th>微博版本</th><th>影响用户数</th>'
+		tableinfo['title']=['微博版本','影响用户数']
 		tablelist.append(tableinfo)
 
 	# 抓取最近一版Top20的crash
@@ -54,7 +54,7 @@ def grabData():
 	tableinfo2['filepath']=outputfile2
 	tableinfo2['sheet']=0
 	tableinfo2['theme']='Android端Top10的crash('+crash_handler.searchdate+')'
-	tableinfo2['title']='<th>crash内容</th><th>crash影响用户数</th>'
+	tableinfo2['title']=['crash内容','影响用户数']
 	tablelist.append(tableinfo2)
 
 	# 影响用户深度Top20的crash统计
@@ -63,7 +63,7 @@ def grabData():
 	tableinfo['filepath']=outputfile
 	tableinfo['sheet']=0
 	tableinfo['theme']='Android影响用户深度Top10的crash('+crash_handler.searchdate+')'
-	tableinfo['title']='<th>用户uid</th><th>crash内容</th><th>crash次数</th>'
+	tableinfo['title']=['用户uid','crash内容','crash次数']
 	tablelist.append(tableinfo)
 
 	wbm.closeWorkbooks()

@@ -26,12 +26,15 @@ class WriteEmail(object):
 		for table in tablelist:
 			# 表格外的标题
 			header='<h4>'+str(count)+'.'+table.get('theme')+'</h4>'
-			table_tag='<table border="1" cellspacing="0" cellpadding="3">'			
+			table_tag='<table border="1" cellspacing="0" cellpadding="3">'
 			# 表格里的标题
-			table_title=self.getTableTitle(table.get('title'))
+			title=''						
+			table_title=table.get('title')
+			for i in range(0,len(table_title)):
+				title=title+'<th>'+table_title[i]+'</th>'
 			# 表格里的数据
 			data=self.buildTableContent(table.get('filepath'),table.get('sheet'))
-			content=content+header+table_tag+table_title+data+'</table>'
+			content=content+header+table_tag+self.getTableTitle(title)+data+'</table>'
 			count=count+1
 		return content
 
