@@ -470,7 +470,7 @@ class CrashHandler(object):
 							filter_content = reson_content
 						self.updateMatchedListWithMaxCount(data_list,uid,filter_content,content.get('doc_count'))
 
-			self.writeSortedToExcel(worksheet,header,self.sortDataList(data_list,(len(header)-1)))
+			self.writeSortedToExcel(worksheet,header,self.sortDataList2(data_list,(len(header)-1)))
 		else:
 			print 'result: '+str(json_data)
 
@@ -481,20 +481,24 @@ class CrashHandler(object):
 		datalist=[]
 		for data in data_list.keys():
 			crash_info = data_list.get(data)
-			if type(crash_info)==dict:
-				row=[]
-				row.append(data)
-				row.append(crash_info.get('uid'))
-				row.append(crash_info.get('counts'))
+			for key in crash_info.keys():
+				row=[]				
+				if data != 'uid':
+					row.append(data)
+				row.append(key)
+				row.append(crash_info.get(key).get('counts'))
 				datalist.append(row)
-			else:
-				for key in crash_info.keys():
-					row=[]				
-					if data != 'uid':
-						row.append(data)
-					row.append(key)
-					row.append(crash_info.get(key).get('counts'))
-					datalist.append(row)
+		return sorted(datalist,key=lambda x:x[sort_index],reverse=True)
+
+	def sortDataList2(self,data_list,sort_index):
+		datalist=[]
+		for data in data_list.keys():
+			crash_info = data_list.get(data)
+			row=[]
+			row.append(data)
+			row.append(crash_info.get('uid'))
+			row.append(crash_info.get('counts'))
+			datalist.append(row)
 		return sorted(datalist,key=lambda x:x[sort_index],reverse=True)
 
 	'''

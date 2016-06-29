@@ -21,6 +21,7 @@ def sendMail(tablelist):
 
 def grabData():
 	crash_handler=CrashHandler.CrashHandler()
+	crash_handler.interval=2
 	print 'timefrom:' + str(crash_handler.timefrom)
 	print 'timeto:' + str(crash_handler.timeto)
 
@@ -39,7 +40,8 @@ def grabData():
 
 	wbm=WorkbookManager.WorkbookManager()
 
-	tablelist=[]	
+	tablelist=[]
+	tag=str(crash_handler.timefrom)+'-'+str(crash_handler.timeto)
 
 	# 抓取最近2版top_number的crash
 	two_versions=crash_handler.getValues(fromvalues,2)
@@ -47,7 +49,7 @@ def grabData():
 	tableinfo2={}
 	tableinfo2['filepath']=outputfile2
 	tableinfo2['sheet']=0
-	tableinfo2['theme']='Android端Top'+str(top_number)+'的crash('+crash_handler.searchdate+')'
+	tableinfo2['theme']='Android端Top'+str(top_number)+'的crash('+tag+')'
 	tableinfo2['title']=['crash内容',str(two_versions[1]),str(two_versions[0])]
 	tablelist.append(tableinfo2)
 
@@ -56,7 +58,7 @@ def grabData():
 	tableinfo={}
 	tableinfo['filepath']=outputfile
 	tableinfo['sheet']=0
-	tableinfo['theme']='Android端影响版本数Top'+str(top_number)+'的crash('+crash_handler.searchdate+')'
+	tableinfo['theme']='Android端影响版本数Top'+str(top_number)+'的crash('+tag+')'
 	tableinfo['title']=['crash内容','影响版本数','影响用户数']
 	tablelist.append(tableinfo)
 
