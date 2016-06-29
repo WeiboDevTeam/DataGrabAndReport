@@ -2,6 +2,8 @@ data/
 output_excel/
 output/
 *.pyc
-*/*.pyc
+Request_Performance/*.pyc
 
 CrashHandler.pyc
+
+*.pyc
