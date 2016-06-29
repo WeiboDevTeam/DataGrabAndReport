@@ -260,6 +260,7 @@ class CrashHandler(object):
 
 			utils=InsertUtils.InsertUtils()		
 			utils.write_header(worksheet,0,0,header)
+
 			index = 1
 			for item in buckets:
 				data=[]
@@ -449,7 +450,7 @@ class CrashHandler(object):
 		
 		if json_data.get('aggregations')!=None:
 			buckets= json_data['aggregations']['count_crash']['buckets']
-			header=['uid','crash content','counts']		
+			header=['crash content','uid','counts']		
 			
 			data_list={}
 			for item in buckets:
@@ -467,9 +468,9 @@ class CrashHandler(object):
 						filter_content=self.filterCrashContent(reson_content)
 						if filter_content=="No Match!":
 							filter_content = reson_content
-						self.updateMatchedList(data_list,uid,filter_content,content.get('doc_count'))
+						self.updateMatchedListWithMaxCount(data_list,uid,filter_content,content.get('doc_count'))
 
-			self.writeSortedToExcel(worksheet,header,self.sortDataList(data_list,len(header)-1))
+			self.writeSortedToExcel(worksheet,header,self.sortDataList(data_list,(len(header)-1)))
 		else:
 			print 'result: '+str(json_data)
 
@@ -480,13 +481,19 @@ class CrashHandler(object):
 		datalist=[]
 		for data in data_list.keys():
 			crash_info = data_list.get(data)
-			for key in crash_info.keys():
-				row=[]				
-				if data != 'uid':
-					row.append(data)
-				row.append(key)
-				row.append(crash_info.get(key).get('counts'))
+			if type(crash_info)==dict:
+				row=[]
+				row.append(crash_info.get('uid'))
+				row.append(crash_info.get('counts'))
 				datalist.append(row)
+			else:
+				for key in crash_info.keys():
+					row=[]				
+					if data != 'uid':
+						row.append(data)
+					row.append(key)
+					row.append(crash_info.get(key).get('counts'))
+					datalist.append(row)
 		return sorted(datalist,key=lambda x:x[sort_index],reverse=True)
 
 	'''
@@ -560,8 +567,27 @@ class CrashHandler(object):
 			if similar:
 				count=dic.get(similar_reason).get('counts')+count			
 
-			data_list[uid][similar_reason]={"counts":count}
-			
+			data_list[uid][similar_reason]={"counts":count}	
+
+	'''
+	进行相似度计算后，保留单个uid下单个crash次数做多的那条记录
+	'''
+	def updateMatchedListWithMaxCount(self,data_list,uid,content,count):
+		similar = False
+		need_update = False
+		similar_reason = content
+		for reason in data_list.keys():
+			if self.isSimilarCrashReason(content,reason):
+				similar = True
+				similar_reason = reason
+				if count > data_list.get(similar_reason).get('counts'):
+					need_update = True
+				break
+		if similar:
+			if need_update:
+				data_list[similar_reason]={"counts":count,"uid":uid}
+		else:			
+			data_list[similar_reason]={"counts":count,"uid":uid}		
 
 	'''
 	开始抓取version包含在versions中的各版本每日crash uids量，每天抓取

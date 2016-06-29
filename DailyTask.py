@@ -50,6 +50,15 @@ def grabData():
 		tableinfo['title']=['微博版本','影响用户数']
 		tablelist.append(tableinfo)
 
+	# 影响用户深度Top20的crash统计
+	outputfile=crash_handler.startCrashInfluenceDCollectionWithFromvalue("Android",wbm,latest_from)
+	tableinfo={}
+	tableinfo['filepath']=outputfile
+	tableinfo['sheet']=0
+	tableinfo['theme']='Android影响用户深度Top'+str(top_number)+'的crash('+crash_handler.searchdate+')'
+	tableinfo['title']=['crash内容','用户uid','crash次数']
+	tablelist.append(tableinfo)
+
 	# 抓取最近一版Top20的crash
 	outputfile2=crash_handler.startCrashCollectionWithFromvalue("Android",wbm,latest_from)
 	tableinfo2={}
@@ -59,14 +68,7 @@ def grabData():
 	tableinfo2['title']=['crash内容','影响用户数']
 	tablelist.append(tableinfo2)
 
-	# 影响用户深度Top20的crash统计
-	outputfile=crash_handler.startCrashInfluenceDCollectionWithFromvalue("Android",wbm,latest_from)
-	tableinfo={}
-	tableinfo['filepath']=outputfile
-	tableinfo['sheet']=0
-	tableinfo['theme']='Android影响用户深度Top'+str(top_number)+'的crash('+crash_handler.searchdate+')'
-	tableinfo['title']=['用户uid','crash内容','crash次数']
-	tablelist.append(tableinfo)
+	
 
 	wbm.closeWorkbooks()
 
