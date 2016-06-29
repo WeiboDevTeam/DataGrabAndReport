@@ -3,3 +3,5 @@ output_excel/
 output/
 *.pyc
 */*.pyc
+
+CrashHandler.pyc
