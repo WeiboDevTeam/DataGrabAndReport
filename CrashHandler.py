@@ -483,6 +483,7 @@ class CrashHandler(object):
 			crash_info = data_list.get(data)
 			if type(crash_info)==dict:
 				row=[]
+				row.append(data)
 				row.append(crash_info.get('uid'))
 				row.append(crash_info.get('counts'))
 				datalist.append(row)
