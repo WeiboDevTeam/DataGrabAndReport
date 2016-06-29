@@ -1,4 +1,5 @@
 data/
 output_excel/
 output/
-.pyc
+*.pyc
+*/*.pyc
