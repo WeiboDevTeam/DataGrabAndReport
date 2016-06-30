@@ -14,7 +14,13 @@ class EsQueryCrashInfluenceDepth(object):
 	def __init__(self, params):
 		super(EsQueryCrashInfluenceDepth, self).__init__()
 		self.params = params
-		xlsx = EsQueryHelper.addworksheet("test.xlsx","android")
+		self.__initWorksheet()
+
+	def __initWorksheet(self):
+		platform = self.params.getPlatform()
+		workbookName = "影响用户最深crash.xlsx"
+		worksheetName = platform
+		xlsx = EsQueryHelper.addworksheet(platform,workbookName,worksheetName)
 		self.workbook = xlsx[0]
 		self.worksheet = xlsx[1]
 

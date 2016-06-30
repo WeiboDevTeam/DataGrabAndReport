@@ -1,6 +1,7 @@
 #!/usr/bin /python
 from EsQueryCrashInfluenceDepth import EsQueryCrashInfluenceDepth
 from EsQueryCrashUidCount import EsQueryCrashUidCount
+from EsQueryWeiboFromValue import EsQueryWeiboFromValue
 from EsCrashQueryParams import EsCrashQueryParams
 from Request_Performance import InsertUtils
 from Request_Performance import WorkbookManager
@@ -10,11 +11,18 @@ import xlsxwriter
 import os,sys
 import difflib
 
-params = EsCrashQueryParams(1);
-params.setFromValues(['1066193010'])
+platforms = ['Android','iphone']
+for platform in platforms:
+	params = EsCrashQueryParams(1, platform);
+	test = EsQueryWeiboFromValue(params)
+	fromvalues = test.doRequest()
+	params.setFromValues(fromvalues)
+	
+	test = EsQueryCrashUidCount(params)
+	test.doRequest()
+
+#params.setFromValues(['1066193010'])
 #test = EsQueryCrashUidCount(params)
 #test.doRequest()
-test = EsQueryCrashInfluenceDepth(params)
-test.doRequest()
-ratio = difflib.SequenceMatcher(None,"str1","str2").ratio()
-print ratio
+#test = EsQueryCrashInfluenceDepth(params)
+#test.doRequest()

@@ -4,6 +4,7 @@ import httplib
 import json
 import xlsxwriter
 from Request_Performance import WorkbookManager
+from datetime import date
 
 __metaclass__ = type
 class EsQueryHelper(object):
@@ -15,9 +16,10 @@ class EsQueryHelper(object):
 	获取输出文件夹的路径
 	'''
 	@staticmethod
-	def getOutputPath():
+	def getOutputPath(platform):
 		dirname = os.path.abspath(os.path.dirname(sys.argv[0]))
-		path=dirname+'/output/'
+		day = str(date.today())
+		path=dirname+'/output/'+day+'/'+platform+'/'
 		if os.path.isdir(path)==False:
 		  print 'create dir:' + path
 		  os.mkdir(path)
@@ -43,11 +45,8 @@ class EsQueryHelper(object):
 		return res
 
 	@staticmethod
-	def addworksheet(workbookname, worksheetname):
-		# path = EsQueryHelper.getOutputPath()
-		# workbook = xlsxwriter.Workbook(path+workbookname)
-		# worksheet = workbook.add_worksheet(worksheetname)
-		path = EsQueryHelper.getOutputPath()+workbookname
+	def addworksheet(platform, workbookname, worksheetname):
+		path = EsQueryHelper.getOutputPath(platform)+workbookname
 		wbm = WorkbookManager.WorkbookManager()
 		workbook = wbm.getWorkbook(path)
 		worksheet = wbm.addWorksheet(workbook,worksheetname)

@@ -5,8 +5,8 @@ class EsCrashQueryParams(EsQueryParams):
 	"""docstring for EsCrashQueryParams
 		query crash of ES platform
 	"""
-	def __init__(self, interval):
-		super(EsCrashQueryParams, self).__init__(interval)
+	def __init__(self, interval, platform):
+		super(EsCrashQueryParams, self).__init__(interval, platform)
 		self.programName = "mweibo_client_crash"
 		self.fromValues = []
 		self.querySize = 1

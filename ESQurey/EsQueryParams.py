@@ -9,7 +9,7 @@ class EsQueryParams(object):
 	"""docstring for EsQueryParams
 		query parameters for pass ES platform
 	"""
-	def __init__(self, interval):
+	def __init__(self, interval, platform="Android"):
 		super(EsQueryParams, self).__init__()
 		self.host = '10.19.0.64'
 		self.port = 9200
@@ -25,6 +25,8 @@ class EsQueryParams(object):
 			self.timeFrom = (self.timeTo - 24*60*60*1000)
 			currentDay = currentDay - timedelta(1)
 			self.daysIndex.append(currentDay.strftime('%Y.%m.%d'))
+
+		self.platform = platform
 
 	def setInterval(sel,interval):
 		self.interval = interval
@@ -43,6 +45,12 @@ class EsQueryParams(object):
 
 	def getTimeTo(self):
 		return self.timeTo
+
+	def getPlatform(self):
+		return self.platform
+
+	def setPlatform(self,platform):
+		self.platform = platform
 
 	def getUrlPattern(self):
 		url = "/"

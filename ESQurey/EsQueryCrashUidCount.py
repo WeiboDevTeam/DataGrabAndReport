@@ -17,9 +17,12 @@ class EsQueryCrashUidCount(object):
 		
 
 	def __initWorkSheet(self):
-		workbookname = "crash率统计"+".xlsx"
-		self.android_worksheet = EsQueryHelper.addworksheet(workbookname,"android")
-		#self.iphone_worksheet = EsQueryHelper.addworksheet(workbookname,"iphone")
+		platform = self.params.getPlatform()
+		workbookName = "crash影响用户统计.xlsx"
+		worksheetName = platform
+		xlsx = EsQueryHelper.addworksheet(platform,workbookName,worksheetName)
+		self.workbook = xlsx[0]
+		self.worksheet = xlsx[1]
 
 	def __getCompleteUrl(self):
 		return self.params.getUrlPattern()+"?search_type=count"
@@ -65,11 +68,6 @@ class EsQueryCrashUidCount(object):
 		
 
 	def __parseAndWriteToExcel(self,result):
-		#if(self.params.getFromValues()[0].endswith("5010")):
-		worksheet = self.android_worksheet
-		#else:
-			#worksheet = self.iphone_worksheet
-
 		json_data=json.loads(result)
 		interval = self.params.getInterval()
 		if(json_data.get('aggregations')!=None):
@@ -86,7 +84,7 @@ class EsQueryCrashUidCount(object):
 					timestr=time.strftime("%Y.%m.%d",ltime)
 					header.append(timestr)	
 				print header
-			utils.write_header(worksheet,0,0,header)		
+			utils.write_header(self.worksheet,0,0,header)		
 				
 			index = 1
 			for item in buckets:
@@ -98,7 +96,8 @@ class EsQueryCrashUidCount(object):
 						break
 					data.append(sub_buckets[i].get('count_uid').get('value'))
 				print data
-				utils.write_crash_data_with_yxis(worksheet,data,header,index,0)
+				utils.write_crash_data_with_yxis(self.worksheet,data,header,index,0)
 				index += 1
+			self.workbook.close()
 		else:
 			print 'result: '+str(json_data)
