@@ -17,12 +17,8 @@ for platform in platforms:
 	test = EsQueryWeiboFromValue(params)
 	fromvalues = test.doRequest()
 	params.setFromValues(fromvalues)
-	
-	test = EsQueryCrashUidCount(params)
-	test.doRequest()
 
-#params.setFromValues(['1066193010'])
-#test = EsQueryCrashUidCount(params)
-#test.doRequest()
-#test = EsQueryCrashInfluenceDepth(params)
-#test.doRequest()
+	#test = EsQueryCrashUidCount(params)
+	#test.doRequest()
+	test = EsQueryCrashInfluenceDepth(params)
+	test.doRequest()

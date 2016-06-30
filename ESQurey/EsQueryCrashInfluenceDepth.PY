@@ -15,6 +15,8 @@ class EsQueryCrashInfluenceDepth(object):
 		super(EsQueryCrashInfluenceDepth, self).__init__()
 		self.params = params
 		self.__initWorksheet()
+		self.fromvalues = self.params.getFromValues()[0:1]
+		print self.fromvalues
 
 	def __initWorksheet(self):
 		platform = self.params.getPlatform()
@@ -35,13 +37,13 @@ class EsQueryCrashInfluenceDepth(object):
 		timestamp={"gte":timeFrom,"lte":timeTo,"format": "epoch_millis"}
 		must.append({"range":{"@timestamp":timestamp}})
 		must.append({"term":{"programname":programname}})
-		must.append({"query_string":{"query":EsQueryHelper.buildQueryString("jsoncontent.from",self.params.getFromValues())}})
+		must.append({"query_string":{"query":EsQueryHelper.buildQueryString("jsoncontent.from",self.fromvalues)}})
 
 		aggs1={}
 		aggs1["terms"]={"size":20,"field":"jsoncontent.uid"}
 
 		aggs2={}
-		aggs2["terms"]={"size":5,"field":"jsoncontent.reson"}
+		aggs2["terms"]={"size":3,"field":"jsoncontent.reson"}
 		aggs2["aggs"]={"fingerprint":{"terms":{"size":5,"field":"fingerprint"}}}
 
 		aggs1["aggs"]={"crash_reson":aggs2}
@@ -74,7 +76,7 @@ class EsQueryCrashInfluenceDepth(object):
 					for crash_fingerprint in fingerprint_bucket:
 						fingerprint = crash_fingerprint.get('key')
 						count = crash_fingerprint.get('doc_count')
-						jsonlog = self.__queryCrashLogByFingerPrinter(self.params.getFromValues()[0], fingerprint)
+						jsonlog = self.__queryCrashLogByFingerPrinter(self.fromvalues[0], fingerprint)
 						result_item={"uid":uid,"reason":reason,"fingerprint":fingerprint,"count":count,"jsonlog":jsonlog}
 						data_list.append(result_item)
 			print len(data_list)

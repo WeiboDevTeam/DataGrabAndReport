@@ -22,7 +22,7 @@ class EsQueryHelper(object):
 		path=dirname+'/output/'+day+'/'+platform+'/'
 		if os.path.isdir(path)==False:
 		  print 'create dir:' + path
-		  os.mkdir(path)
+		  os.makedirs(path)
 		return path
 
 	@staticmethod
