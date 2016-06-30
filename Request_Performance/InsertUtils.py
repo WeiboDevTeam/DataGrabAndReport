@@ -1,15 +1,13 @@
-
-# !/usr/bin/python
-# encoding:utf-8
-
 import urllib2
 import json
 import xlsxwriter
 import xlrd
 
+__metaclass__ = type
 class InsertUtils(object):
-    """docstring for WriteUtils"""
+    """docstring for InsertUtils"""
     def __init__(self):
+        super(InsertUtils, self).__init__()
         self.hasHeader=False
         self.hasCrashHeader=False
 

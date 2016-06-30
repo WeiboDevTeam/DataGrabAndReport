@@ -2,6 +2,7 @@
 import os,sys
 import httplib
 import json
+import xlsxwriter
 from Request_Performance import WorkbookManager
 
 __metaclass__ = type
@@ -43,7 +44,12 @@ class EsQueryHelper(object):
 
 	@staticmethod
 	def addworksheet(workbookname, worksheetname):
+		# path = EsQueryHelper.getOutputPath()
+		# workbook = xlsxwriter.Workbook(path+workbookname)
+		# worksheet = workbook.add_worksheet(worksheetname)
 		path = EsQueryHelper.getOutputPath()+workbookname
 		wbm = WorkbookManager.WorkbookManager()
 		workbook = wbm.getWorkbook(path)
-		return wbm.addWorksheet(workbook,worksheetname)
+		worksheet = wbm.addWorksheet(workbook,worksheetname)
+		return (workbook,worksheet)
+		

@@ -10,7 +10,6 @@ class EsCrashQueryParams(EsQueryParams):
 		self.programName = "mweibo_client_crash"
 		self.fromValues = []
 		self.querySize = 1
-		self.fingerprint=""
 
 	def setFromValues(self,fromValues):
 		for fromvalue in fromValues:
@@ -27,9 +26,3 @@ class EsCrashQueryParams(EsQueryParams):
 
 	def getProgramName(self):
 		return self.programName
-
-	def setFingerPrint(self,fingerprint):
-		self.fingerprint = fingerprint
-
-	def getFingerPrint(self):
-		return self.fingerprint
