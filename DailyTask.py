@@ -38,7 +38,9 @@ def grabData():
 
 	wbm=WorkbookManager.WorkbookManager()
 
-	tablelist=[]	
+	tablelist=[]
+
+	tag=crash_handler.searchdate+' version:'+str(latest_version)
 
 	# 抓取最近6版的crash影响用户数	
 	for i in range(len(CrashHandler.systems)):		
@@ -55,7 +57,7 @@ def grabData():
 	tableinfo={}
 	tableinfo['filepath']=outputfile
 	tableinfo['sheet']=0
-	tableinfo['theme']='Android影响用户深度Top'+str(top_number)+'的crash('+crash_handler.searchdate+')'
+	tableinfo['theme']='Android影响用户深度Top'+str(top_number)+'的crash('+tag+')'
 	tableinfo['title']=['crash内容','用户uid','crash次数']
 	tablelist.append(tableinfo)
 
@@ -64,7 +66,7 @@ def grabData():
 	tableinfo2={}
 	tableinfo2['filepath']=outputfile2
 	tableinfo2['sheet']=0
-	tableinfo2['theme']='Android端Top'+str(top_number)+'的crash('+crash_handler.searchdate+')'
+	tableinfo2['theme']='Android端Top'+str(top_number)+'的crash('+tag+')'
 	tableinfo2['title']=['crash内容','影响用户数']
 	tablelist.append(tableinfo2)
 

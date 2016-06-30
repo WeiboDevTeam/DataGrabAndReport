@@ -45,8 +45,6 @@ class WorkbookManager(object):
 			list_item['worksheet'] = worksheet
 			list_item['count'] =0
 			self.worksheetList.append(list_item)
-		print newsheet
-		print self.worksheetList
 		return worksheet
 
 	def getInsertCount(self,worksheet):
