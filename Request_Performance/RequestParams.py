@@ -63,4 +63,5 @@ class RequestParams():
 					'sub_type':self.subType,
 					'systerm':self.systemType,
 					'docid':self.docid}
+		print 'url:'+self.requestUrl+'?'+urllib.urlencode(values) 
 		return self.requestUrl+'?'+urllib.urlencode(values) 

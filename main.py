@@ -2,7 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import json
-import Request_Performance
+import Request_Performance,CrashHandler
+import os,sys
 from Request_Performance import PerformanceAvgCostTimeHandler
 from Request_Performance import PerformanceErrorCodeHandler
 from Request_Performance import PerformanceSucRatioHandler
@@ -12,6 +13,13 @@ from Request_Performance import WorkbookManager
 from Request_Performance import InsertUtils
 from Request_Performance.Constants import Const
 from datetime import timedelta, date
+
+systems=['android',"iphone"]
+dayInterval = -8
+fromDay=(date.today() + timedelta(dayInterval)).strftime('%Y%m%d')
+endDay=(date.today() + timedelta(-1)).strftime('%Y%m%d')
+dirname = os.path.abspath(os.path.dirname(sys.argv[0]))
+path=dirname+'/output/'
 
 def getAllSubBusinessType():
 	'''
@@ -69,7 +77,7 @@ def getPerformanceAvgCostTime(system,workbookmanager,targetVersion,file,type):
 	avgCostTimeHandler.system = system
 	avgCostTimeHandler.endday = endDay
 	avgCostTimeHandler.fromday = fromDay
-	avgCostTimeHandler.sub_business_type = sub_business_type
+	avgCostTimeHandler.sub_business_type = getAllSubBusinessType()
 	avgCostTimeHandler.doRequest(workbookmanager,type)
 
 def getPerformanceErroCodeTrend(system,workbookmanager,targetVersion,file,type):
@@ -81,7 +89,7 @@ def getPerformanceErroCodeTrend(system,workbookmanager,targetVersion,file,type):
 	errorCodeHandler.system = system
 	errorCodeHandler.endday = endDay
 	errorCodeHandler.fromday = fromDay
-	errorCodeHandler.sub_business_type = sub_business_type
+	errorCodeHandler.sub_business_type = getAllSubBusinessType()
 	errorCodeHandler.doRequest(workbookmanager,type)
 
 def getPerformanceSucRatioTrend(system,workbookmanager,targetVersion,file,type):
@@ -93,25 +101,16 @@ def getPerformanceSucRatioTrend(system,workbookmanager,targetVersion,file,type):
 	sucRatioHandler.system = system
 	sucRatioHandler.endday = endDay
 	sucRatioHandler.fromday = fromDay
-	sucRatioHandler.sub_business_type = sub_business_type
+	sucRatioHandler.sub_business_type = getAllSubBusinessType()
 	sucRatioHandler.doRequest(workbookmanager,type)
-
-systems=['android',"iphone"]
-dayInterval = -7
-fromDay=(date.today() + timedelta(dayInterval)).strftime('%Y%m%d')
-endDay=(date.today() + timedelta(-1)).strftime('%Y%m%d')
-
-sub_business_type=getAllSubBusinessType()
-
-version=getCurrentWeiboVersion()
-version.sort()
-
 
 # grab data from sla and write to excel files with basic chart
 def startGrabWeeklyData(wbm):
+	version=getCurrentWeiboVersion()
+	version.sort()
 	targetVersion=version[len(version)-3:len(version)]
 	for system in systems:
-		fileName = system+'_'+Const.PATH_WEEKLY_DATA
+		fileName = system+'_'+endDay+Const.PATH_WEEKLY_DATA
 		getPerformanceAvgCostTime(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
 		getPerformanceSucRatioTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
 		getPerformanceErroCodeTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
@@ -119,17 +118,21 @@ def startGrabWeeklyData(wbm):
 # grab data from sla and write the average result to excel files
 def startGrabWeeklyAvgData(wbm):
 	# # get recent 6 version data
+	version=getCurrentWeiboVersion()
+	version.sort()
 	targetVersion=version
 	for system in systems:
-		fileName = system+'_'+Const.PATH_WEEKLY_AVG_DATA
+		fileName = path+system+'_'+endDay+Const.PATH_WEEKLY_AVG_DATA
 		getPerformanceAvgCostTime(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_AVG_DATA)
 		getPerformanceSucRatioTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_AVG_DATA)
 
 def main():
 	wbm=WorkbookManager.WorkbookManager()
-	startGrabWeeklyData(wbm)
-	startGrabWeeklyAvgData(wbm)
+	# startGrabWeeklyData(wbm)
+	# # startGrabWeeklyAvgData(wbm)
 	wbm.closeWorkbooks() # must close workbook
+	print path
+
 
 
 if __name__ == '__main__':

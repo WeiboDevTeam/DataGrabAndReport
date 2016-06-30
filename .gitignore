@@ -1,0 +1,9 @@
+data/
+output_excel/
+output/
+*.pyc
+Request_Performance/*.pyc
+
+CrashHandler.pyc
+
+*.pyc

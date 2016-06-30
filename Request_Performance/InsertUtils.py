@@ -9,9 +9,9 @@ import xlrd
 
 class InsertUtils(object):
     """docstring for WriteUtils"""
-    def __init__(self,filename):
+    def __init__(self):
         self.hasHeader=False
-        self.filename=filename
+        self.hasCrashHeader=False
 
     # write data to excel file and plot line
     def write_data(self,workbook,worksheet,sheetname,data,count,subtype):
@@ -35,6 +35,17 @@ class InsertUtils(object):
             worksheet.write(count*16+1+x,1,versions[x],Bold)
             worksheet.write_row(count*16+1+x,2,rows[x])
         print 'write ' + subtype + ' done!'
+
+    def write_header(self,worksheet,x,y,header):
+        worksheet.write_row(x,y,header)
+
+    def write_crash_data_with_yxis(self,worksheet,data,header,x,y):
+        for i in range(0,len(data)):
+            worksheet.write(x,y+i,data[i])
+
+    def write_crash_data_with_xxis(self,worksheet,data,header,x,y):
+        for i in range(0,len(data)):
+            worksheet.write(x+i,y,data[i])        
 
     # write data to excel file and plot line
     def write_avg_data(self,workbook,worksheet,sheetname,data,count,subtype):
@@ -143,27 +154,36 @@ class InsertUtils(object):
     def combineChart(self,chart1,chart2):
         return chart1.combine(chart2)
 
-    '''
-    def getRowNumber(self,sheetname):
-        try:
-            data=xlrd.open_workbook(self.filename)
-            table=data.sheet_by_name(sheetname)
-            print table.nrows
-            return table.nrows
-        except Exception, e:
-            print str(e)
-            return 1
-    ''' 
-
-    def copyData(self,filename,sheetname,worksheet):
+    def readExcel(self,filename,sheetname):
         try:
             data=xlrd.open_workbook(filename)
             table=data.sheet_by_name(sheetname)
+            return table
+        except Exception, e:
+            print str(e)
+            return None
+
+    def readExcel(self,filename,sheetindex):
+        try:
+            data=xlrd.open_workbook(filename)
+            table=data.sheet_by_index(sheetindex)
+            return table
+        except Exception, e:
+            print str(e)
+            return None
+
+
+    def copyData(self,filename,sheetname,worksheet,row_index,col_index):
+        try:
+            data=xlrd.open_workbook(filename)
+            table=data.sheet_by_index(col_index)
             nrows=table.nrows
             print table.row_values(0)
             print nrows
             for x in range(0,nrows):
                 print table.row_values(x)
-                worksheet.write_row(x,0,table.row_values(x))
+                worksheet.write_row(x+row_index,col_index,table.row_values(x))
+            return table
         except Exception, e:
-            print str(e)  
+            print str(e) 
+            return None 
