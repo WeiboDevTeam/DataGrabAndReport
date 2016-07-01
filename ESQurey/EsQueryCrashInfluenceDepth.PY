@@ -41,10 +41,10 @@ class EsQueryCrashInfluenceDepth(object):
 		must.append({"query_string":{"query":EsQueryHelper.buildQueryString("jsoncontent.from",self.fromvalues)}})
 
 		aggs1={}
-		aggs1["terms"]={"size":20,"field":"jsoncontent.uid"}
+		aggs1["terms"]={"size":10,"field":"jsoncontent.uid"}
 
 		aggs2={}
-		aggs2["terms"]={"size":3,"field":"jsoncontent.reson"}
+		aggs2["terms"]={"size":1,"field":"jsoncontent.reson"}
 		aggs2["aggs"]={"fingerprint":{"terms":{"size":5,"field":"fingerprint"}}}
 
 		aggs1["aggs"]={"crash_reson":aggs2}
@@ -102,16 +102,19 @@ class EsQueryCrashInfluenceDepth(object):
 							else:
 								threoldRatio = 0.8
 							if(ratio > threoldRatio):
+								needAppend = False
 								filteredCrashItem['count']=filteredCrashItem['count']+item['count']
+								break
 							else:
 								needAppend = True
-							break
 						else:
 							needAppend = True
+					print needAppend
 					if(needAppend):
 						filteredList.append(item)	
 
 			filteredList.sort(key=lambda k: (k.get('count', 0)),reverse=True)
+			print 'after filtered length ' +str(len(filteredList))
 			self.__writeToExcel(filteredList)
 		else:
 			print 'result: '+str(json_data)
@@ -128,7 +131,6 @@ class EsQueryCrashInfluenceDepth(object):
 		for data in data_list:
 			row=[]
 			row.append(data['uid'])
-			ow.append(data['uid'])
 			row.append(data['reason'])
 			row.append(data['jsonlog'])
 			row.append(data['fingerprint'])
