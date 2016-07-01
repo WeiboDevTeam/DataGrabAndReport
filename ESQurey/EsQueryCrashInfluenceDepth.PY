@@ -3,6 +3,7 @@ from EsCrashQueryParams import  EsCrashQueryParams
 from EsQueryHelper import  EsQueryHelper
 from EsQueryCrashSingleLog import  EsQueryCrashSingleLog 
 from Request_Performance import InsertUtils
+from JiraCreate import JiraCreateHelper
 import json
 import difflib
 
@@ -60,12 +61,16 @@ class EsQueryCrashInfluenceDepth(object):
 		param = self.params
 		result = EsQueryHelper.httpPostRequest(param.getHost(), param.getPort(), self.__getCompleteUrl(), requeryBody)
 
+		# jiraCreater = JiraCreateHelper.JiraCreateHelper()
+		# appendJiraStatusResult = jiraCreater.createJiraIssue(result)
+		# self.__parseAndWrite(appendJiraStatusResult)
 		self.__parseAndWrite(result)
 
 	def __parseAndWrite(self,result):
 		json_data = json.loads(result)
 		if json_data.get('aggregations')!=None:
-			buckets= json_data['aggregations']['count_crash']['buckets']	
+			buckets= json_data['aggregations']['count_crash']['buckets']
+			fromvalue = self.fromvalues[0]
 			data_list=[]
 			for item in buckets:
 				uid=item.get('key')
@@ -76,7 +81,7 @@ class EsQueryCrashInfluenceDepth(object):
 					for crash_fingerprint in fingerprint_bucket:
 						fingerprint = crash_fingerprint.get('key')
 						count = crash_fingerprint.get('doc_count')
-						jsonlog = self.__queryCrashLogByFingerPrinter(self.fromvalues[0], fingerprint)
+						jsonlog = self.__queryCrashLogByFingerPrinter(fromvalue, fingerprint)
 						result_item={"uid":uid,"reason":reason,"fingerprint":fingerprint,"count":count,"jsonlog":jsonlog}
 						data_list.append(result_item)
 			print len(data_list)
@@ -92,8 +97,11 @@ class EsQueryCrashInfluenceDepth(object):
 							crashLog = filteredCrashItem['jsonlog']
 							similarRatio = difflib.SequenceMatcher(None,crashLog, item['jsonlog'])
 							ratio = similarRatio.ratio()
-							print ratio
-							if(ratio > 0.9):
+							if(fromvalue.endswith('0510')):
+								threoldRatio = 0.9
+							else:
+								threoldRatio = 0.8
+							if(ratio > threoldRatio):
 								filteredCrashItem['count']=filteredCrashItem['count']+item['count']
 							else:
 								needAppend = True
@@ -114,14 +122,17 @@ class EsQueryCrashInfluenceDepth(object):
 
 	def __writeToExcel(self,data_list):
 		utils=InsertUtils.InsertUtils()		
-		header=['uid','crash reason','crash log','counts']	
+		header=['uid','crash reason','crash log', 'fingerprint', 'counts']	
 		utils.write_header(self.worksheet,0,0,header)
 		index = 1			
 		for data in data_list:
 			row=[]
 			row.append(data['uid'])
+			ow.append(data['uid'])
 			row.append(data['reason'])
 			row.append(data['jsonlog'])
+			row.append(data['fingerprint'])
+			#row.append(data['jira_status'])
 			row.append(data['count'])
 			utils.write_crash_data_with_yxis(self.worksheet,row,header,index,0)
 			index += 1

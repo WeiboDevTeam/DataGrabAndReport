@@ -7,6 +7,7 @@ from Request_Performance import InsertUtils
 from Request_Performance import WorkbookManager
 from Request_Performance import RequestParams
 from EsQueryHelper import EsQueryHelper
+from JiraCreate import JiraCreateHelper
 import xlsxwriter
 import os,sys
 import difflib
@@ -20,5 +21,6 @@ for platform in platforms:
 
 	#test = EsQueryCrashUidCount(params)
 	#test.doRequest()
+
 	test = EsQueryCrashInfluenceDepth(params)
 	test.doRequest()
