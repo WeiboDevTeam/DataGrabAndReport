@@ -39,7 +39,7 @@ class EsQueryHelper(object):
 		headerdata={"Host":host}
 		conn=httplib.HTTPConnection(host,port)
 		json_string=json.dumps(requestBody)
-		print requesturl,json_string
+		#print requesturl,json_string
 		conn.request("POST",url=requesturl,body=json_string,headers=headerdata)
 		response=conn.getresponse()
 		res=response.read()

@@ -2,51 +2,33 @@
 from EsCrashQueryParams import  EsCrashQueryParams
 from EsQueryHelper import  EsQueryHelper
 from Request_Performance import InsertUtils
+from EsQueryJob import EsQueryJob
 import json
 import time
 
 __metaclass__=type
-class EsQueryCrashUidCount(object):
+class EsQueryCrashUidCount(EsQueryJob):
 	"""docstring for EsQueryCrashUidCount
 	查询crash影响用户数"""
 
 	def __init__(self, params):
-		super(EsQueryCrashUidCount, self).__init__()
-		self.params = params
-		self.__initWorkSheet()
+		super(EsQueryCrashUidCount, self).__init__(params)
+
+	def getWorkbookPath(self):
+		return self.workbookPath
 		
+	def getWorkbookName(self):
+		return 'crash影响用户统计.xlsx'
 
-	def __initWorkSheet(self):
-		platform = self.params.getPlatform()
-		workbookName = "crash影响用户统计.xlsx"
-		worksheetName = platform
-		xlsx = EsQueryHelper.addworksheet(platform,workbookName,worksheetName)
-		self.workbook = xlsx[0]
-		self.worksheet = xlsx[1]
-		self.workbookPath = xlsx[2]
-
-	def __getCompleteUrl(self):
-		return self.params.getUrlPattern()+"?search_type=count"
-
-	def __buildRecentVersionsCrashQuery(self):
-		must=[]
-		timeFrom = self.params.getTimeFrom()
-		timeTo = self.params.getTimeTo()
-		print timeFrom,timeTo
-		programname = self.params.getProgramName()
-		timestamp={"gte":timeFrom,"lte":timeTo,"format": "epoch_millis"}
-		must.append({"range":{"@timestamp":timestamp}})
-		must.append({"term":{"programname":programname}})
-		must.append({"query_string":{"query":EsQueryHelper.buildQueryString("jsoncontent.from",self.params.getFromValues())}})
-
+	def buildQueryMustNot(self):
+		
 		must_not=[]
 		must_not.append({"query":{"match":{"jsoncontent.subtype":{"query":"anr","type":"phrase"}}}})
+		return must_not
 
-		filtered={}
-		filtered['filter']={"bool":{"must":must,"must_not":must_not}}	
-
+	def buildQueryAgg(self):
 		date={}
-		extended_bounds={"min": timeFrom,"max": timeTo} 
+		extended_bounds={"min": self.params.getTimeFrom(),"max": self.params.getTimeTo()} 
 		date["date_histogram"]={"field": "@timestamp","interval": "1d","time_zone": "Asia/Shanghai", "min_doc_count": 1,"extended_bounds":extended_bounds}
 		date["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}}}
 
@@ -54,24 +36,9 @@ class EsQueryCrashUidCount(object):
 		aggs["terms"]={"size":7,"field":"jsoncontent.from"}
 		aggs["aggs"]={"date":date}
 
-		query={}
-		query["query"]={"filtered":filtered}
-		query["aggs"]={"count_crash":aggs}
-		return query
+		return aggs
 
-	def getWorkbookPath(self):
-		return self.workbookPath
-
-	def doRequest(self):
-		requeryBody = self.__buildRecentVersionsCrashQuery()
-
-		param = self.params
-		result = EsQueryHelper.httpPostRequest(param.getHost(), param.getPort(), self.__getCompleteUrl(), requeryBody)
-		print result
-		self.__parseAndWriteToExcel(result)
-		
-
-	def __parseAndWriteToExcel(self,result):
+	def parseAndWrite(self,result):
 		json_data=json.loads(result)
 		interval = self.params.getInterval()
 		if(json_data.get('aggregations')!=None):
