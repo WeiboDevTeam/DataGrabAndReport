@@ -5,7 +5,7 @@ __metaclass__ = type
 class JiraCreateHelper(object):
 	WEIBO_ANDROID_PROJECT = "MOBILEWEIBOANDROIDPHONE"
 	WEIBO_IPHONE_PROJECT = "MOBLEWEIBOIPHONE"
-	JIRA_STATUS = {'1':"开放中",'3':'解决中','5':'已解决','6':'已关闭','7':'重开'}
+	JIRA_STATUS = {'1':"open",'3':'inprogress','5':'resolved','6':'closed','7':'reopen'}
 	"""docstring for JiraCreateHelper"""
 	def __init__(self):
 		super(JiraCreateHelper, self).__init__()
@@ -43,26 +43,35 @@ class JiraCreateHelper(object):
 
 			projectKey = JiraCreateHelper.getProjectKey(fromvalue)
 			version = JiraCreateHelper.getVersion(fromvalue)
-			issue = jiraCreator.queryJiraIssue(projectKey, [fingerprint])
+			print crashLogInfo['jsonlog']
+			issue = jiraCreator.queryJiraIssue(projectKey, [fingerprint,crashLogInfo['jsonlog'][0:72]])
+			print issue
 			if(issue == None):
 				#create new jira issue
-				jiraCreator.outPutToJira(crashLogInfo,projectKey,version)
+				issue = jiraCreator.outPutToJira(crashLogInfo,projectKey,version)
+				pass
 			else:
-				findversion = False
-				affectVersions = issue['affectsVersions']
-				for versionInfo in affectVersions:
-					if(versionInfo['name']==version):
-						findversion = True
-						break
-				if(findversion == False):
-					status = issue['status']
-					if(status == 5 or status == 6):
-						print status
-						status = 7 #reopen
-					jiraCreator.updateJiraVersion(issue, crashLogInfo, version)
+				description = issue['description']
+				find = description.find(crashLogInfo['jsonlog'])
+				if(find!=-1):
+
+					findversion = False
+					affectVersions = issue['affectsVersions']
+					for versionInfo in affectVersions:
+						if(versionInfo['name']==version):
+							findversion = True
+							break
+					if(findversion == False):
+						status = issue['status']
+						if(status == '5' or status == '6'):
+							issue['status'] = '7' #reopen
+						jiraCreator.updateJiraVersion(issue, crashLogInfo, version)
+					else:
+						pass
 				else:
-					pass
-				crashLogInfo['jira_status'] = JiraCreateHelper.JIRA_STATUS[issue['status']]
+					issue = jiraCreator.outPutToJira(crashLogInfo,projectKey,version)
+
+			crashLogInfo['jira_status'] = JiraCreateHelper.JIRA_STATUS[(int)(issue['status'])]
 
 	@staticmethod
 	def getRemoteVersion(jiraCreator,crashlogInfo):

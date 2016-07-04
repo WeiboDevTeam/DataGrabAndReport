@@ -5,7 +5,7 @@ from EsQueryCrashSingleLog import  EsQueryCrashSingleLog
 from Request_Performance import InsertUtils
 from JiraCreate import JiraCreateHelper
 import json
-import difflib
+import difflib,re
 
 __metaclass__=type
 class EsQueryCrashInfluenceDepth(object):
@@ -17,7 +17,6 @@ class EsQueryCrashInfluenceDepth(object):
 		self.params = params
 		self.__initWorksheet()
 		self.fromvalues = self.params.getFromValues()[0:1]
-		print self.fromvalues
 
 	def __initWorksheet(self):
 		platform = self.params.getPlatform()
@@ -26,6 +25,7 @@ class EsQueryCrashInfluenceDepth(object):
 		xlsx = EsQueryHelper.addworksheet(platform,workbookName,worksheetName)
 		self.workbook = xlsx[0]
 		self.worksheet = xlsx[1]
+		self.workbookPath = xlsx[2]
 
 	def __getCompleteUrl(self):
 		return self.params.getUrlPattern()+"?search_type=count"
@@ -41,10 +41,10 @@ class EsQueryCrashInfluenceDepth(object):
 		must.append({"query_string":{"query":EsQueryHelper.buildQueryString("jsoncontent.from",self.fromvalues)}})
 
 		aggs1={}
-		aggs1["terms"]={"size":10,"field":"jsoncontent.uid"}
+		aggs1["terms"]={"size":20,"field":"jsoncontent.uid"}
 
 		aggs2={}
-		aggs2["terms"]={"size":1,"field":"jsoncontent.reson"}
+		aggs2["terms"]={"size":3,"field":"jsoncontent.reson"}
 		aggs2["aggs"]={"fingerprint":{"terms":{"size":5,"field":"fingerprint"}}}
 
 		aggs1["aggs"]={"crash_reson":aggs2}
@@ -54,6 +54,8 @@ class EsQueryCrashInfluenceDepth(object):
 		query["aggs"]={"count_crash":aggs1}
 		return query
 
+	def getWorkbookPath(self):
+		return self.workbookPath
 
 	def doRequest(self):
 		requeryBody = self.__buildQueryBody()
@@ -61,9 +63,6 @@ class EsQueryCrashInfluenceDepth(object):
 		param = self.params
 		result = EsQueryHelper.httpPostRequest(param.getHost(), param.getPort(), self.__getCompleteUrl(), requeryBody)
 
-		# jiraCreater = JiraCreateHelper.JiraCreateHelper()
-		# appendJiraStatusResult = jiraCreater.createJiraIssue(result)
-		# self.__parseAndWrite(appendJiraStatusResult)
 		self.__parseAndWrite(result)
 
 	def __parseAndWrite(self,result):
@@ -82,7 +81,8 @@ class EsQueryCrashInfluenceDepth(object):
 						fingerprint = crash_fingerprint.get('key')
 						count = crash_fingerprint.get('doc_count')
 						jsonlog = self.__queryCrashLogByFingerPrinter(fromvalue, fingerprint)
-						result_item={"uid":uid,"reason":reason,"fingerprint":fingerprint,"count":count,"jsonlog":jsonlog}
+						filterJsonlog = self.__filterCrashContent(jsonlog)
+						result_item={"uid":uid,'fromvalue':fromvalue, "reason":reason,"fingerprint":fingerprint,"count":count,"jsonlog":filterJsonlog}
 						data_list.append(result_item)
 			print len(data_list)
 			filteredList=[]
@@ -103,18 +103,27 @@ class EsQueryCrashInfluenceDepth(object):
 								threoldRatio = 0.8
 							if(ratio > threoldRatio):
 								needAppend = False
-								filteredCrashItem['count']=filteredCrashItem['count']+item['count']
+								if(filteredCrashItem['uid'] == item['uid']):
+									filteredCrashItem['count']=filteredCrashItem['count']+item['count']
+								else:
+									if(filteredCrashItem['count']<item['count']):
+										needAppend = True
+										filteredList.remove(filteredCrashItem)
+									else:
+										pass
 								break
 							else:
 								needAppend = True
 						else:
 							needAppend = True
-					print needAppend
 					if(needAppend):
 						filteredList.append(item)	
 
 			filteredList.sort(key=lambda k: (k.get('count', 0)),reverse=True)
 			print 'after filtered length ' +str(len(filteredList))
+			# jiraCreater = JiraCreateHelper.JiraCreateHelper()
+			# jiraCreater.createJiraIssue(filteredList)
+
 			self.__writeToExcel(filteredList)
 		else:
 			print 'result: '+str(json_data)
@@ -125,7 +134,7 @@ class EsQueryCrashInfluenceDepth(object):
 
 	def __writeToExcel(self,data_list):
 		utils=InsertUtils.InsertUtils()		
-		header=['uid','crash reason','crash log', 'fingerprint', 'counts']	
+		header=['uid','crash reason','crash log', 'fingerprint', 'jira_status', 'counts']	
 		utils.write_header(self.worksheet,0,0,header)
 		index = 1			
 		for data in data_list:
@@ -139,3 +148,15 @@ class EsQueryCrashInfluenceDepth(object):
 			utils.write_crash_data_with_yxis(self.worksheet,row,header,index,0)
 			index += 1
 		self.workbook.close()
+
+	'''
+	crash content过滤dexpathlist
+	'''
+	def __filterCrashContent(self,reason):
+		regexDexPathList=r'(.*)DexPathList.*]](.*)'
+		matchDexpath = re.match(regexDexPathList,reason,re.S|re.M|re.I)
+		if matchDexpath:
+			content=matchDexpath.group(1)+'DexPathList'+matchDexpath.group(2)
+			return content
+		else:
+			return reason

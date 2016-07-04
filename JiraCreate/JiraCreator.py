@@ -14,6 +14,7 @@ class JiraCreator(object):
 	JIRA_PASS = '19880808.lgz6'
 	ISSUE_TYPE_ID = "1";
 	PRIORITY_ID = "3";
+	ES_CRASH_URL='''http://sla.weibo.cn:5601/app/kibana#/discover/New_Discover_mweibo_clent_crash?_g=(time:(from:now-12h,to:now))&_a=(query:(query_string:(analyze_wildcard:!t,query:'programname:mweibo_client_crash AND ingerprint:%s AND jsoncontent.from:%s')))'''
 
 	ISSUE_STATUS_OPEN = 1
 	SSUE_STATUS_IN_PROGRESS = 3
@@ -55,7 +56,7 @@ class JiraCreator(object):
 			sudsDict['assignee'] = 'guizhong'
 		
 		sudsDict['duedate']= datetime.datetime.now()
-		sudsDict['affectsVersions'] = [{'id':str(random.randint(1,100000)),'name':version}]
+		sudsDict['affectsVersions'] = [{'name':version}]
 		print sudsDict
 		newIssue = self.session.jira1.createIssue(self.auth, sudsDict)
 		time.sleep(1)
@@ -102,7 +103,6 @@ class JiraCreator(object):
 
 		affectsVersions = issue['affectsVersions']
 		affectsVersions.append({'id':str(random.randint(1,100000)),'name':version})
-		print affectsVersions
 		self.session.jira1.updateIssue(self.auth,issue['key'],{'status':[issue['status']],'affectsVersions':affectsVersions})
 		time.sleep(1)
 
@@ -116,8 +116,7 @@ class JiraCreator(object):
 	def createJiraDesc(self,crashLog):
 		desc="log fingerprint: "+crashLog['fingerprint']+ \
 		"\ncrash uid: "+crashLog['uid']+ \
-		"\nseatch in kibana :"+"http://sla.weibo.cn/mweibo/#/dashboard/elasticsearch/mweibo_client_crash_for_jira?fingerprint="+ \
-		crashLog['fingerprint']+"&from="+crashLog['fromvalue'] + \
+		"\nseatch in kibana :"+ (ES_CRASH_URL % (crashLog['fingerprint'],crashLog['fromvalue'])) + \
 		"\nin version:"+crashLog['fromvalue']+"\n"+crashLog['jsonlog']
 		print desc
 		return desc

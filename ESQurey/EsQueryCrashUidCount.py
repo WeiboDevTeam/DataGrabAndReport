@@ -23,6 +23,7 @@ class EsQueryCrashUidCount(object):
 		xlsx = EsQueryHelper.addworksheet(platform,workbookName,worksheetName)
 		self.workbook = xlsx[0]
 		self.worksheet = xlsx[1]
+		self.workbookPath = xlsx[2]
 
 	def __getCompleteUrl(self):
 		return self.params.getUrlPattern()+"?search_type=count"
@@ -58,12 +59,15 @@ class EsQueryCrashUidCount(object):
 		query["aggs"]={"count_crash":aggs}
 		return query
 
+	def getWorkbookPath(self):
+		return self.workbookPath
+
 	def doRequest(self):
 		requeryBody = self.__buildRecentVersionsCrashQuery()
 
 		param = self.params
 		result = EsQueryHelper.httpPostRequest(param.getHost(), param.getPort(), self.__getCompleteUrl(), requeryBody)
-
+		print result
 		self.__parseAndWriteToExcel(result)
 		
 

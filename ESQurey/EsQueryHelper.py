@@ -39,6 +39,7 @@ class EsQueryHelper(object):
 		headerdata={"Host":host}
 		conn=httplib.HTTPConnection(host,port)
 		json_string=json.dumps(requestBody)
+		print requesturl,json_string
 		conn.request("POST",url=requesturl,body=json_string,headers=headerdata)
 		response=conn.getresponse()
 		res=response.read()
@@ -50,5 +51,5 @@ class EsQueryHelper(object):
 		wbm = WorkbookManager.WorkbookManager()
 		workbook = wbm.getWorkbook(path)
 		worksheet = wbm.addWorksheet(workbook,worksheetname)
-		return (workbook,worksheet)
+		return (workbook,worksheet, path)
 		
