@@ -24,3 +24,5 @@ for platform in platforms:
 
 	test = EsQueryCrashInfluenceDepth(params)
 	test.doRequest()
+	filepath=test.getWorkbookPath()
+	print filepath
