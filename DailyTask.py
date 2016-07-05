@@ -48,7 +48,7 @@ def grabData():
 		tableinfo['filepath']=filepath
 		tableinfo['sheet']=0
 		tableinfo['theme']=str(platform)+'影响用户深度Top'+str(top_number)+"的crash"
-		tableinfo['title']=['uid','crash reason','crash log', 'fingerprint', 'jira_status', 'counts']
+		tableinfo['title']=['uid','crash内容','crash次数']
 		tablelist.append(tableinfo)
 
 		# 影响用户数统计

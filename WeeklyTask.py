@@ -44,15 +44,15 @@ def grabData():
 		tablelist.append(tableinfo1)
 
 		# 覆盖版本数top_number的crash
-		# versions=EsQueryMostVersionCrash.EsQueryMostVersionCrash(params)
-		# versions.doRequest()
-		# filepath2=versions.getWorkbookPath()
-		# tableinfo2={}
-		# tableinfo2['filepath']=filepath2
-		# tableinfo2['sheet']=0
-		# tableinfo2['theme']=str(platform)+'端覆盖版本Top'+str(top_number)+'的crash('+tag+')'
-		# tableinfo2['title']=['crash内容','影响版本数','影响用户数']
-		# tablelist.append(tableinfo2)
+		versions=EsQueryMostVersionCrash.EsQueryMostVersionCrash(params)
+		versions.doRequest()
+		filepath2=versions.getWorkbookPath()
+		tableinfo2={}
+		tableinfo2['filepath']=filepath2
+		tableinfo2['sheet']=0
+		tableinfo2['theme']=str(platform)+'端覆盖版本Top'+str(top_number)+'的crash('+tag+')'
+		tableinfo2['title']=['crash内容','影响版本数','影响用户数']
+		tablelist.append(tableinfo2)
 
 	return tablelist
 

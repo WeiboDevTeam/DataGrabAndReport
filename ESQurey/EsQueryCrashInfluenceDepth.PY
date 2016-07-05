@@ -105,15 +105,16 @@ class EsQueryCrashInfluenceDepth(EsQueryJob):
 
 	def __writeToExcel(self,data_list):
 		utils=InsertUtils.InsertUtils()		
-		header=['uid','crash reason','crash log', 'fingerprint', 'jira_status', 'counts']	
+		# header=['uid','crash reason','crash log', 'fingerprint', 'jira_status', 'counts']	
+		header=['uid','crash content','counts']
 		utils.write_header(self.worksheet,0,0,header)
 		index = 1			
 		for data in data_list:
 			row=[]
 			row.append(data['uid'])
-			row.append(data['reason'])
+			# row.append(data['reason'])
 			row.append(data['jsonlog'])
-			row.append(data['fingerprint'])
+			# row.append(data['fingerprint'])
 			#row.append(data['jira_status'])
 			row.append(data['count'])
 			utils.write_crash_data_with_yxis(self.worksheet,row,header,index,0)
