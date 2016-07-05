@@ -1,10 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import time
-from datetime import datetime, timedelta
 import WriteEmail
-import CrashHandler
-from Request_Performance import WorkbookManager
+from ESQurey import EsCrashQueryParams
+from ESQurey import EsQueryWeiboFromValue
+from ESQurey import EsQureyTopCrashLastVersions
+from ESQurey import EsQueryMostVersionCrash
 
 # 定义摘取的记录条数
 top_number=20
@@ -20,49 +20,39 @@ def sendMail(tablelist):
 	writeEmail.mailSend(content)
 
 def grabData():
-	crash_handler=CrashHandler.CrashHandler()
-	crash_handler.interval=2
-	print 'timefrom:' + str(crash_handler.timefrom)
-	print 'timeto:' + str(crash_handler.timeto)
-
-	fromvalues=crash_handler.getFieldValues("Android",CrashHandler.fromfield)
-	versions=crash_handler.getFieldValues("Android",CrashHandler.versionfield)
-	print fromvalues
-	print versions
-
-	latest_from=crash_handler.getValue(fromvalues,1)
-	latest_version=crash_handler.getValue(versions,1)
-	print 'latest_from:'+ latest_from
-	print 'latest_version:'+ latest_version
-
-	versions=crash_handler.getValues(versions,6)
-	print versions
-
-	wbm=WorkbookManager.WorkbookManager()
-
+	platforms = ['Android','iphone']
 	tablelist=[]
-	tag=str(crash_handler.timefrom)+'-'+str(crash_handler.timeto)
 
-	# 抓取最近2版top_number的crash
-	two_versions=crash_handler.getValues(fromvalues,2)
-	outputfile2=crash_handler.startTopCrashCollectionWithFromValues("Android",wbm,two_versions)
-	tableinfo2={}
-	tableinfo2['filepath']=outputfile2
-	tableinfo2['sheet']=0
-	tableinfo2['theme']='Android端Top'+str(top_number)+'的crash('+tag+')'
-	tableinfo2['title']=['crash内容',str(two_versions[1]),str(two_versions[0])]
-	tablelist.append(tableinfo2)
+	for platform in platforms:
+		params = EsCrashQueryParams.EsCrashQueryParams(4, platform);
+		test = EsQueryWeiboFromValue.EsQueryWeiboFromValue(params)
+		fromvalues = test.doRequest()
+		params.setFromValues(fromvalues)
 
-	# 覆盖版本数top_number的crash
-	outputfile=crash_handler.startCrashCoverageCollectionWithVersions("Android",wbm,versions)
-	tableinfo={}
-	tableinfo['filepath']=outputfile
-	tableinfo['sheet']=0
-	tableinfo['theme']='Android端影响版本数Top'+str(top_number)+'的crash('+tag+')'
-	tableinfo['title']=['crash内容','影响版本数','影响用户数']
-	tablelist.append(tableinfo)
+		tag=str(params.getTimeFrom())+'-'+str(params.getTimeTo())
 
-	wbm.closeWorkbooks()
+		# 抓取最近2版top_number的crash
+		crash=EsQureyTopCrashLastVersions.EsQureyTopCrashLastVersions(params)
+		crash.doRequest()
+		filepath1=crash.getWorkbookPath()
+		two_versions=crash.getFromValues()
+		tableinfo1={}
+		tableinfo1['filepath']=filepath1
+		tableinfo1['sheet']=0
+		tableinfo1['theme']=str(platform)+'端Top'+str(top_number)+'的crash('+tag+')'
+		tableinfo1['title']=['crash内容',str(two_versions[1][2:5]),str(two_versions[0][2:5])]
+		tablelist.append(tableinfo1)
+
+		# 覆盖版本数top_number的crash
+		# versions=EsQueryMostVersionCrash.EsQueryMostVersionCrash(params)
+		# versions.doRequest()
+		# filepath2=versions.getWorkbookPath()
+		# tableinfo2={}
+		# tableinfo2['filepath']=filepath2
+		# tableinfo2['sheet']=0
+		# tableinfo2['theme']=str(platform)+'端覆盖版本Top'+str(top_number)+'的crash('+tag+')'
+		# tableinfo2['title']=['crash内容','影响版本数','影响用户数']
+		# tablelist.append(tableinfo2)
 
 	return tablelist
 

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+f#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from urllib2 import Request,urlopen,URLError,HTTPError

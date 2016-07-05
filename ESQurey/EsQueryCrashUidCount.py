@@ -60,7 +60,8 @@ class EsQueryCrashUidCount(EsQueryJob):
 			index = 1
 			for item in buckets:
 				data=[]
-				data.append(item.get('key'))
+				# 从from值中提取版本号
+				data.append(item.get('key')[2:5]) 
 				sub_buckets = item.get('date').get('buckets')		
 				for i in range(0,len(sub_buckets)):
 					if i >= interval:

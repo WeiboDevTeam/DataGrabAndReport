@@ -16,6 +16,12 @@ class EsQueryJob(object):
 	def initFromValues(self):
 		self.fromvalues = self.params.getFromValues()
 
+	def getFromValues(self):
+		return self.fromvalues
+
+	def getWorkbookPath(self):
+		return self.workbookPath
+
 	@abstractmethod
 	def getWorkbookName(self):
 		pass
