@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from EsCrashQueryParams import  EsCrashQueryParams
+from EsQueryCrashSingleLog import EsQueryCrashSingleLog
 from EsQueryHelper import  EsQueryHelper
 from Request_Performance import InsertUtils
 from EsQueryJob import EsQueryJob
@@ -30,38 +31,51 @@ class EsQueryTop20CrashLog(EsQueryJob):
 
 	def buildQueryAgg(self):
 		aggs={}
-		aggs["terms"]={"size":50,"field":"jsoncontent.content"}
-		aggs["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}},"reason":{"terms":{"field":"jsoncontent.reson","size":5},"aggs":{"2":{"cardinality":{"field":"jsoncontent.uid"}}}}}
-
+		if(self.fromvalues[0].endswith('5010')):
+			aggs["terms"]={"size":50,"field":"jsoncontent.content"}
+			aggs["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}},"reason":{"terms":{"field":"jsoncontent.reson","size":5},"aggs":{"2":{"cardinality":{"field":"jsoncontent.uid"}}}}}
+		else:
+			aggs["terms"]={"size":50,"field":"fingerprint"}
+			aggs["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}}}
 		return aggs
 
 	def parseAndWrite(self,result):
 		json_data=json.loads(result)
+		fromvalue=self.fromvalues[0]
 		if json_data.get('aggregations')!=None:
 			buckets= json_data['aggregations']['count_crash']['buckets']
 			header=['crash content','counts']		
 
 			data_list={}
 			for item in buckets:
+				print item
 				content=item.get('key')
-				crash_resons=item.get('reason').get('buckets')
-				for reson in crash_resons:
-					# 判断crash的content中是否包含crash的原因
-					if reson.get('key') in content:
-						reson_content=content
-					else:
-						reson_content=reson.get('key')+'\n'+content
-					# 过滤dexpathlist内容，这部分对相似度计算有影响
-					filter_content=self.filterCrashContent(reson_content)
-					if filter_content=="No Match!":
-						filter_content = reson_content
+				if(fromvalue.endswith("5010")):
+					crash_resons=item.get('reason').get('buckets')
+					for reson in crash_resons:
+						# 判断crash的content中是否包含crash的原因
+						if reson.get('key') in content:
+							reson_content=content
+						else:
+							reson_content=reson.get('key')+'\n'+content
+						# 过滤dexpathlist内容，这部分对相似度计算有影响
+						filter_content=self.filterCrashContent(reson_content)
+						if filter_content=="No Match!":
+							filter_content = reson_content
 
-					self.updateMatchedList(data_list,'uid',filter_content,item.get('doc_count'))
+						self.updateMatchedList(data_list,'uid',filter_content,item.get('doc_count'))
+				else:
+					jsonlog = self.__queryCrashLogByFingerPrinter(fromvalue, content)
+					self.updateMatchedList(data_list,'uid',jsonlog,item.get('doc_count'))
 
 			self.writeSortedToExcel(header,self.sortDataList(data_list,len(header)-1))
 		else:
 			print 'result: '+str(json_data)
 
+
+	def __queryCrashLogByFingerPrinter(self,fromvalue,fingerprint):
+		querySingerCrashLog = EsQueryCrashSingleLog	(self.params)
+		return querySingerCrashLog.doRequest(fromvalue,fingerprint)
 
 	'''
 	对列表做排序,指定列进行降序排序

@@ -27,14 +27,13 @@ class EsQueryCrashInfluenceDepth(EsQueryJob):
 
 	def buildQueryAgg(self):
 		aggs1={}
-		aggs1["terms"]={"size":1,"field":"jsoncontent.uid"}
+		aggs1["terms"]={"size":20,"field":"jsoncontent.uid"}
 
 		aggs2={}
-		aggs2["terms"]={"size":1,"field":"jsoncontent.reson"}
+		aggs2["terms"]={"size":3,"field":"jsoncontent.reson"}
 		aggs2["aggs"]={"fingerprint":{"terms":{"size":5,"field":"fingerprint"}}}
 
 		aggs1["aggs"]={"crash_reson":aggs2}
-		print aggs1
 		return aggs1
 
 	def parseAndWrite(self,result):
