@@ -29,7 +29,9 @@ def grabData():
 		fromvalues = test.doRequest()
 		params.setFromValues(fromvalues)
 
-		tag=str(params.getTimeFrom())+'-'+str(params.getTimeTo())
+		datefrom=time.strftime(searchformat,time.localtime(params.getTimeFrom()/1000))
+		dateto=time.strftime(searchformat,time.localtime(params.getTimeTo()/1000))
+		tag=str(datefrom)+'-'+str(dateto)
 
 		# 抓取最近2版top_number的crash
 		crash=EsQureyTopCrashLastVersions.EsQureyTopCrashLastVersions(params)

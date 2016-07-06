@@ -54,7 +54,7 @@ class WriteEmail(object):
 		nrows=sheet.nrows
 		ncols=sheet.ncols
 		for i in range(0,nrows):
-			td=''
+			td='<td>'+str(i+1)+'</td>'
 			for j in range(ncols):
 				cellData=sheet.cell_value(i,j)				
 				try:
@@ -77,7 +77,7 @@ class WriteEmail(object):
 		else:
 			number=len(data)
 		for i in range(0,number):
-			td=''
+			td='<td>'+str(i+1)+'</td>'
 			for j in range(len(data[i])):
 				cellData=data[i][j]
 				tip='<td>'+str(cellData)+'</td>'
@@ -111,9 +111,9 @@ class WriteEmail(object):
 		# 设置发件人
 		sender = 'xiaofei9@staff.weibo.com'
 		# 设置接收人
-		receiver='xiaofei9@staff.weibo.com'
+		receiver=['xiaofei9@staff.weibo.com']
 		# 设置邮件主题
-		subject='测试邮件，请忽略！'
+		subject='每日crash反馈'
 		#设置发件服务器，即smtp服务器
 		smtpserver='mail.staff.sina.com.cn'
 		# 配置端口
