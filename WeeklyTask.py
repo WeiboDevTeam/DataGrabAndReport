@@ -5,9 +5,11 @@ from ESQurey import EsCrashQueryParams
 from ESQurey import EsQueryWeiboFromValue
 from ESQurey import EsQureyTopCrashLastVersions
 from ESQurey import EsQueryMostVersionCrash
+import time
 
 # 定义摘取的记录条数
 top_number=20
+searchformat="%Y.%m.%d"
 
 def doTask():
 	print "do timer task"
@@ -29,6 +31,8 @@ def grabData():
 		fromvalues = test.doRequest()
 		params.setFromValues(fromvalues)
 
+		print fromvalues
+
 		datefrom=time.strftime(searchformat,time.localtime(params.getTimeFrom()/1000))
 		dateto=time.strftime(searchformat,time.localtime(params.getTimeTo()/1000))
 		tag=str(datefrom)+'-'+str(dateto)
@@ -42,7 +46,7 @@ def grabData():
 		tableinfo1['filepath']=filepath1
 		tableinfo1['sheet']=0
 		tableinfo1['theme']=str(platform)+'端Top'+str(top_number)+'的crash('+tag+')'
-		tableinfo1['title']=['crash内容',str(two_versions[1][2:5]),str(two_versions[0][2:5])]
+		tableinfo1['title']=['序号','crash内容',str(two_versions[1][2:5]),str(two_versions[0][2:5])]
 		tablelist.append(tableinfo1)
 
 		# 覆盖版本数top_number的crash
@@ -53,7 +57,7 @@ def grabData():
 		tableinfo2['filepath']=filepath2
 		tableinfo2['sheet']=0
 		tableinfo2['theme']=str(platform)+'端覆盖版本Top'+str(top_number)+'的crash('+tag+')'
-		tableinfo2['title']=['crash内容','影响版本数','影响用户数']
+		tableinfo2['title']=['序号','crash内容','影响版本数','影响用户数']
 		tablelist.append(tableinfo2)
 
 	return tablelist

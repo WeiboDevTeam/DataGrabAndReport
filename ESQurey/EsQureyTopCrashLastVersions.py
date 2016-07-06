@@ -40,6 +40,7 @@ class EsQureyTopCrashLastVersions(EsQueryJob):
 			buckets= json_data['aggregations']['count_crash']['buckets']
 			header=['reason']
 			header.extend(self.fromvalues)
+			print self.fromvalues
 
 			utils=InsertUtils.InsertUtils()		
 			utils.write_header(self.worksheet,0,0,header)
