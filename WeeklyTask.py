@@ -26,7 +26,7 @@ def grabData():
 	tablelist=[]
 
 	for platform in platforms:
-		params = EsCrashQueryParams.EsCrashQueryParams(4, platform);
+		params = EsCrashQueryParams.EsCrashQueryParams(3, platform);
 		test = EsQueryWeiboFromValue.EsQueryWeiboFromValue(params)
 		fromvalues = test.doRequest()
 		params.setFromValues(fromvalues)

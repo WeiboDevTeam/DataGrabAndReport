@@ -16,13 +16,14 @@ class EsQueryParams(object):
 		self.interval = interval
 
 		self.daysIndex = []
-		currentDay = date.today()
+		currentDay = date.today() - timedelta(1)
 		timstamp = time.mktime(time.strptime(str(currentDay)+" 00:00:00",'%Y-%m-%d %H:%M:%S'))
 		self.timeTo  = (int(timstamp))*1000
+		self.timeFrom = self.timeTo
 		endDay = currentDay.strftime('%Y.%m.%d')
 		self.daysIndex.append(endDay)
 		for i in range(0,interval):
-			self.timeFrom = (self.timeTo - 24*60*60*1000)
+			self.timeFrom = (self.timeFrom - 24*60*60*1000)
 			currentDay = currentDay - timedelta(1)
 			self.daysIndex.append(currentDay.strftime('%Y.%m.%d'))
 
