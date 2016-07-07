@@ -2,7 +2,7 @@
 import json
 from EsCrashQueryParams import  EsCrashQueryParams
 from EsQueryHelper import  EsQueryHelper
-from Request_Performance import InsertUtils
+from ManagerUtils import InsertUtils
 from EsQueryJob import EsQueryJob
 
 class EsQueryMostVersionCrash(EsQueryJob):

@@ -3,7 +3,7 @@
 from EsCrashQueryParams import  EsCrashQueryParams
 from EsQueryCrashSingleLog import EsQueryCrashSingleLog
 from EsQueryHelper import  EsQueryHelper
-from Request_Performance import InsertUtils
+from ManagerUtils import InsertUtils
 from EsQueryJob import EsQueryJob
 import os,sys,re,difflib,json
 
@@ -33,7 +33,7 @@ class EsQueryTop20CrashLog(EsQueryJob):
 		aggs={}
 		if(self.fromvalues[0].endswith('5010')):
 			aggs["terms"]={"size":50,"field":"jsoncontent.content"}
-			aggs["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}},"reason":{"terms":{"field":"jsoncontent.reson","size":5},"aggs":{"2":{"cardinality":{"field":"jsoncontent.uid"}}}}}
+			aggs["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}},"reason":{"terms":{"field":"jsoncontent.reson","size":5},"aggs": {"1": {"cardinality": {"field": "jsoncontent.uid"}},"fingerprint":{"terms":{"field":"fingerprint","size":1},"aggs":{"2":{"cardinality":{"field":"jsoncontent.uid"}}}}}}}
 		else:
 			aggs["terms"]={"size":50,"field":"fingerprint"}
 			aggs["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}}}
@@ -44,7 +44,7 @@ class EsQueryTop20CrashLog(EsQueryJob):
 		fromvalue=self.fromvalues[0]
 		if json_data.get('aggregations')!=None:
 			buckets= json_data['aggregations']['count_crash']['buckets']
-			header=['crash content','counts']		
+			header=['crashlog','fingerprint','counts']		
 
 			data_list={}
 			for item in buckets:
@@ -62,11 +62,18 @@ class EsQueryTop20CrashLog(EsQueryJob):
 						filter_content=self.filterCrashContent(reson_content)
 						if filter_content=="No Match!":
 							filter_content = reson_content
+						fingerprint = ''
+						inner_buckets=reson.get('fingerprint').get('buckets')
+						for f in inner_buckets:
+							fingerprint = f.get('key')
 
-						self.updateMatchedList(data_list,'uid',filter_content,item.get('doc_count'))
+						self.updateMatchedList(data_list,'uid',filter_content,fingerprint,item.get('doc_count'))
 				else:
 					jsonlog = self.__queryCrashLogByFingerPrinter(fromvalue, content)
-					self.updateMatchedList(data_list,'uid',jsonlog,item.get('doc_count'))
+					self.updateMatchedList(data_list,'uid',jsonlog,content,item.get('doc_count'))
+
+			# jiraCreater = JiraCreateHelper.JiraCreateHelper()
+			# jiraCreater.createJiraIssue(filteredList)
 
 			self.writeSortedToExcel(header,self.sortDataList(data_list,len(header)-1))
 		else:
@@ -85,13 +92,9 @@ class EsQueryTop20CrashLog(EsQueryJob):
 		for data in data_list.keys():
 			crash_info = data_list.get(data)
 			for key in crash_info.keys():
-				row=[]				
-				if data != 'uid':
-					row.append(data)
-				row.append(key)
-				row.append(crash_info.get(key).get('counts'))
+				row={'crashlog':key,'fingerprint':crash_info.get(key).get('fingerprint'),'counts':crash_info.get(key).get('counts')}				
 				datalist.append(row)
-		return sorted(datalist,key=lambda x:x[sort_index],reverse=True)
+		return sorted(datalist,key=lambda x:(x.get('counts', 0)),reverse=True)
 
 	'''
 	将已排序的数据写入excel表格
@@ -101,7 +104,11 @@ class EsQueryTop20CrashLog(EsQueryJob):
 		utils.write_header(self.worksheet,0,0,header)
 		index = 1			
 		for data in data_list:
-			utils.write_crash_data_with_yxis(self.worksheet,data,header,index,0)
+			row=[]
+			row.append(data.get('crashlog'))
+			row.append(data.get('fingerprint'))
+			row.append(data.get('counts'))
+			utils.write_crash_data_with_yxis(self.worksheet,row,header,index,0)
 			index += 1
 
 	'''
@@ -129,7 +136,7 @@ class EsQueryTop20CrashLog(EsQueryJob):
 	'''
 	进行相似度计算后，根据结果进行crash次数累加
 	'''
-	def updateMatchedList(self,data_list,uid,content,count):
+	def updateMatchedList(self,data_list,uid,content,fingerprint,count):
 		if data_list.get(uid)==None:
 			dic={}
 			dic[content]={"counts":count}
@@ -144,6 +151,7 @@ class EsQueryTop20CrashLog(EsQueryJob):
 					similar_reason = reason
 					break
 			if similar:
-				count=dic.get(similar_reason).get('counts')+count			
+				count=dic.get(similar_reason).get('counts')+count
+				fingerprint=dic.get(similar_reason).get('fingerprint')		
 
-			data_list[uid][similar_reason]={"counts":count}	
+			data_list[uid][similar_reason]={"counts":count,'fingerprint':fingerprint}	

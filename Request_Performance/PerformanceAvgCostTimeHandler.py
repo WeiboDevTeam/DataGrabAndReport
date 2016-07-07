@@ -1,7 +1,7 @@
 from Request_Performance import PerformanceRequestParams
 from Request_Performance import HttpRequest
 from urllib2 import URLError
-from InsertUtils import InsertUtils
+from ManagerUtils import InsertUtils
 from Constants import Const
 import json
 
@@ -125,7 +125,7 @@ class PerformanceAvgCostTimeHandler(object):
 			print 'request sub_type error'
 		return result
 
-	# insert data sheet by sheetname
+	# 根据业务名插入sheet页
 	def __inserAvgToExcel(self,workbook,worksheet,parsedData,count,subtype):
 		insert_instance=InsertUtils()
 		insert_instance.write_avg_data(workbook,worksheet,self.sheetname,parsedData,count,subtype)

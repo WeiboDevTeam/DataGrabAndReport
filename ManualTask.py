@@ -2,15 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import json
-import Request_Performance,CrashHandler
 import os,sys
 from Request_Performance import PerformanceAvgCostTimeHandler
 from Request_Performance import PerformanceErrorCodeHandler
 from Request_Performance import PerformanceSucRatioHandler
 from Request_Performance import PerformanceRequestParams
 from Request_Performance import HttpRequest
-from Request_Performance import WorkbookManager
-from Request_Performance import InsertUtils
+from ManagerUtils import WorkbookManager
+from ManagerUtils import InsertUtils
 from Request_Performance.Constants import Const
 from datetime import timedelta, date
 
@@ -21,10 +20,10 @@ endDay=(date.today() + timedelta(-1)).strftime('%Y%m%d')
 dirname = os.path.abspath(os.path.dirname(sys.argv[0]))
 path=dirname+'/output/'
 
+'''
+获取性能日志下所有子业务的类型
+'''
 def getAllSubBusinessType():
-	'''
-	获取性能日志下所有子业务的类型
-	'''
 	sub_business_type=[]
 	requestParam = PerformanceRequestParams.PerformanceRequestParams()
 	requestParam.setFromDay(fromDay)
@@ -48,10 +47,10 @@ def getAllSubBusinessType():
 
 	return None
 
+'''
+获取当前的微博版本，一般是最近的5个版本
+'''
 def getCurrentWeiboVersion():
-	'''
-	获取当前的微博版本，一般是最近的5个版本
-	'''
 	requestParam = PerformanceRequestParams.PerformanceRequestParams()
 	requestParam.setFromDay(fromDay)
 	requestParam.setEndDay(endDay)
@@ -68,10 +67,10 @@ def getCurrentWeiboVersion():
 
 	return None
 
+'''
+获取各个业务的平均响应时间
+'''
 def getPerformanceAvgCostTime(system,workbookmanager,targetVersion,file,type):
-	'''
-	获取各个业务的平均响应时间
-	'''
 	avgCostTimeHandler = PerformanceAvgCostTimeHandler.PerformanceAvgCostTimeHandler(file)
 	avgCostTimeHandler.version = targetVersion
 	avgCostTimeHandler.system = system
@@ -80,10 +79,10 @@ def getPerformanceAvgCostTime(system,workbookmanager,targetVersion,file,type):
 	avgCostTimeHandler.sub_business_type = getAllSubBusinessType()
 	avgCostTimeHandler.doRequest(workbookmanager,type)
 
+'''
+获取各个业务模块的错误码趋势数据
+'''
 def getPerformanceErroCodeTrend(system,workbookmanager,targetVersion,file,type):
-	'''
-	获取各个业务模块的错误码趋势数据
-	'''
 	errorCodeHandler = PerformanceErrorCodeHandler.PerformanceErrorCodeHandler(file)
 	errorCodeHandler.version = targetVersion
 	errorCodeHandler.system = system
@@ -92,10 +91,10 @@ def getPerformanceErroCodeTrend(system,workbookmanager,targetVersion,file,type):
 	errorCodeHandler.sub_business_type = getAllSubBusinessType()
 	errorCodeHandler.doRequest(workbookmanager,type)
 
+'''
+获取各个业务模块的成功率
+'''
 def getPerformanceSucRatioTrend(system,workbookmanager,targetVersion,file,type):
-	'''
-	获取各个业务模块的成功率
-	'''
 	sucRatioHandler = PerformanceSucRatioHandler.PerformanceSucRatioHandler(file)
 	sucRatioHandler.version = targetVersion
 	sucRatioHandler.system = system
@@ -113,7 +112,7 @@ def startGrabWeeklyData(wbm):
 		fileName = system+'_'+endDay+Const.PATH_WEEKLY_DATA
 		getPerformanceAvgCostTime(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
 		getPerformanceSucRatioTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
-		getPerformanceErroCodeTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
+		# getPerformanceErroCodeTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
 
 # grab data from sla and write the average result to excel files
 def startGrabWeeklyAvgData(wbm):
@@ -128,11 +127,11 @@ def startGrabWeeklyAvgData(wbm):
 
 def main():
 	wbm=WorkbookManager.WorkbookManager()
+	sub_business_type=getAllSubBusinessType()
 	# startGrabWeeklyData(wbm)
 	# # startGrabWeeklyAvgData(wbm)
 	wbm.closeWorkbooks() # must close workbook
 	print path
-
 
 
 if __name__ == '__main__':

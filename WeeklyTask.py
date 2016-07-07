@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import WriteEmail
+from ManagerUtils import WriteEmail
 from ESQurey import EsCrashQueryParams
 from ESQurey import EsQueryWeiboFromValue
 from ESQurey import EsQureyTopCrashLastVersions

@@ -2,12 +2,11 @@ f#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from urllib2 import Request,urlopen,URLError,HTTPError
-from Request_Performance import WorkbookManager
-from Request_Performance import InsertUtils
+from ManagerUtils import WorkbookManager
+from ManagerUtils import InsertUtils
 import httplib,urllib,urllib2,json
 import time
 import os,sys,re,difflib
-import CrashHandler
 
 perinterval=24*60*60*1000
 versionsNum=10

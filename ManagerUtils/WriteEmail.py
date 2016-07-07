@@ -6,7 +6,6 @@ from email import encoders
 from email.mime.text import MIMEText
 from email.header import Header
 import base64
-import WriteEmail
 
 class WriteEmail(object):
 
