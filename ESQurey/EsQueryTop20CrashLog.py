@@ -48,7 +48,6 @@ class EsQueryTop20CrashLog(EsQueryJob):
 
 			data_list={}
 			for item in buckets:
-				print item
 				content=item.get('key')
 				if(fromvalue.endswith("5010")):
 					crash_resons=item.get('reason').get('buckets')

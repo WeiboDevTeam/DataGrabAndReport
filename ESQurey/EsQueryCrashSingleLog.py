@@ -60,7 +60,8 @@ class EsQueryCrashSingleLog(object):
 
 	def __translateIosLog(self,fromvalue,esItem):
 		body = {"from":fromvalue,"arch":esItem["jsoncontent"]["sytem"]["arch"],"imgadd":esItem["jsoncontent"]["sytem"]["loadaddress"],"content":esItem['jsonlog']}
-		req = urllib2.Request("http://wbcrash.sinaapp.com/query/sla_full", urllib.urlencode(body), headers={"Content-Type":"application/x-www-form-urlencoded"}) 
+		urlencodeBody = urllib.urlencode(body)
+		req = urllib2.Request("http://crash.client.weibo.cn/query/sla_full", urlencodeBody, headers={"Content-Type":"application/x-www-form-urlencoded"}) 
 		response = urllib2.urlopen(req) 
 		the_page = response.read()
 		content = json.loads(the_page).get('content')
