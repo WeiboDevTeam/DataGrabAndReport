@@ -4,6 +4,7 @@ from datetime import date
 import datetime
 import time
 import random
+import urllib
 __metaclass__=type
 class JiraCreator(object):
 	"""docstring for JiraCreator
@@ -14,7 +15,9 @@ class JiraCreator(object):
 	JIRA_PASS = '19880808.lgz6'
 	ISSUE_TYPE_ID = "1";
 	PRIORITY_ID = "3";
-	ES_CRASH_URL='''http://sla.weibo.cn:5601/app/kibana#/discover/New_Discover_mweibo_clent_crash?_g=(time:(from:now-12h,to:now))&_a=(query:(query_string:(analyze_wildcard:!t,query:'programname:mweibo_client_crash AND ingerprint:%s AND jsoncontent.from:%s')))'''
+	ES_CRASH_URL='''http://sla.weibo.cn:5601/app/kibana#/discover/New_Discover_mweibo_clent_crash?'''
+	ES_CRASH_QUERY_STRING = '''(query:(query_string:(analyze_wildcard:!t,query:'programname:mweibo_client_crash AND fingerprint:%s AND jsoncontent.from:%s')))'''
+	
 
 	ISSUE_STATUS_OPEN = 1
 	SSUE_STATUS_IN_PROGRESS = 3
@@ -114,9 +117,14 @@ class JiraCreator(object):
 			return summary
 
 	def createJiraDesc(self,crashLog):
-		desc="log fingerprint: "+crashLog['fingerprint']+ \
-		"\ncrash uid: "+crashLog['uid']+ \
-		"\nseatch in kibana :"+ (ES_CRASH_URL % (crashLog['fingerprint'],crashLog['fromvalue'])) + \
-		"\nin version:"+crashLog['fromvalue']+"\n"+crashLog['jsonlog']
+		es_query = JiraCreator.ES_CRASH_QUERY_STRING % (crashLog.get('fingerprint'),crashLog.get('fromvalue'))
+		es_query_body = {'_g':'(time:(from:now-12h,to:now))','_a':es_query}
+		es_query_url = JiraCreator.ES_CRASH_URL+urllib.urlencode(es_query_body)
+		desc="log fingerprint: "+crashLog.get('fingerprint')+ \
+		"\nsearch in kibana :"+ es_query_url + \
+		"\nin version:"+crashLog.get('fromvalue')+"\n"+crashLog.get('jsonlog')
+
+		if(crashLog.get('uid') != None):
+			desc = desc+"\ncrash uid: " + crashLog.get('uid')
 		print desc
 		return desc

@@ -5,6 +5,7 @@ from EsQueryCrashSingleLog import EsQueryCrashSingleLog
 from EsQueryHelper import  EsQueryHelper
 from ManagerUtils import InsertUtils
 from EsQueryJob import EsQueryJob
+from JiraCreate import JiraCreateHelper
 import os,sys,re,difflib,json
 
 __metaclass__=type
@@ -36,7 +37,7 @@ class EsQueryTop20CrashLog(EsQueryJob):
 			aggs["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}},"reason":{"terms":{"field":"jsoncontent.reson","size":5},"aggs": {"1": {"cardinality": {"field": "jsoncontent.uid"}},"fingerprint":{"terms":{"field":"fingerprint","size":1},"aggs":{"2":{"cardinality":{"field":"jsoncontent.uid"}}}}}}}
 		else:
 			aggs["terms"]={"size":50,"field":"fingerprint"}
-			aggs["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}}}
+			aggs["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}},"reason":{"terms":{"field":"jsoncontent.reson","size":1}}}
 		return aggs
 
 	def parseAndWrite(self,result):
@@ -49,11 +50,12 @@ class EsQueryTop20CrashLog(EsQueryJob):
 			data_list={}
 			for item in buckets:
 				content=item.get('key')
+				crash_resons=item.get('reason').get('buckets')
 				if(fromvalue.endswith("5010")):
-					crash_resons=item.get('reason').get('buckets')
 					for reson in crash_resons:
 						# 判断crash的content中是否包含crash的原因
-						if reson.get('key') in content:
+						crashReason = reson.get('key')
+						if crashReason in content:
 							reson_content=content
 						else:
 							reson_content=reson.get('key')+'\n'+content
@@ -66,15 +68,18 @@ class EsQueryTop20CrashLog(EsQueryJob):
 						for f in inner_buckets:
 							fingerprint = f.get('key')
 
-						self.updateMatchedList(data_list,'uid',filter_content,fingerprint,item.get('doc_count'))
+						self.updateMatchedList(data_list,'uid',filter_content,fingerprint,crashReason,item.get('doc_count'))
 				else:
+					reason = crash_resons[0].get('key')
 					jsonlog = self.__queryCrashLogByFingerPrinter(fromvalue, content)
-					self.updateMatchedList(data_list,'uid',jsonlog,content,item.get('doc_count'))
+					self.updateMatchedList(data_list,'uid',jsonlog,content,reason,item.get('doc_count'))
 
-			# jiraCreater = JiraCreateHelper.JiraCreateHelper()
-			# jiraCreater.createJiraIssue(filteredList)
+			sortedList = self.sortDataList(data_list,len(header)-1)
+			if(fromvalue.endswith('5010')):
+				jiraCreater = JiraCreateHelper.JiraCreateHelper()
+				jiraCreater.createJiraIssue(sortedList)
 
-			self.writeSortedToExcel(header,self.sortDataList(data_list,len(header)-1))
+			self.writeSortedToExcel(header,sortedList)
 		else:
 			print 'result: '+str(json_data)
 
@@ -91,7 +96,7 @@ class EsQueryTop20CrashLog(EsQueryJob):
 		for data in data_list.keys():
 			crash_info = data_list.get(data)
 			for key in crash_info.keys():
-				row={'crashlog':key,'fingerprint':crash_info.get(key).get('fingerprint'),'counts':crash_info.get(key).get('counts')}				
+				row={'jsonlog':key,'reason':crash_info.get(key).get('reason'),'fingerprint':crash_info.get(key).get('fingerprint'),'fromvalue':self.fromvalues[0],'counts':crash_info.get(key).get('counts')}				
 				datalist.append(row)
 		return sorted(datalist,key=lambda x:(x.get('counts', 0)),reverse=True)
 
@@ -135,7 +140,7 @@ class EsQueryTop20CrashLog(EsQueryJob):
 	'''
 	进行相似度计算后，根据结果进行crash次数累加
 	'''
-	def updateMatchedList(self,data_list,uid,content,fingerprint,count):
+	def updateMatchedList(self,data_list,uid,content,fingerprint,crashReason,count):
 		if data_list.get(uid)==None:
 			dic={}
 			dic[content]={"counts":count}
@@ -153,4 +158,4 @@ class EsQueryTop20CrashLog(EsQueryJob):
 				count=dic.get(similar_reason).get('counts')+count
 				fingerprint=dic.get(similar_reason).get('fingerprint')		
 
-			data_list[uid][similar_reason]={"counts":count,'fingerprint':fingerprint}	
+			data_list[uid][similar_reason]={"counts":count,'fingerprint':fingerprint,"reason":crashReason}	
