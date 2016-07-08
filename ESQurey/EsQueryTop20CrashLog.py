@@ -156,6 +156,7 @@ class EsQueryTop20CrashLog(EsQueryJob):
 					break
 			if similar:
 				count=dic.get(similar_reason).get('counts')+count
-				fingerprint=dic.get(similar_reason).get('fingerprint')		
+				fingerprint=dic.get(similar_reason).get('fingerprint')	
+				crashReason=dic.get(similar_reason).get('reason')	
 
 			data_list[uid][similar_reason]={"counts":count,'fingerprint':fingerprint,"reason":crashReason}	
