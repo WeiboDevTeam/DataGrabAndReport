@@ -5,15 +5,9 @@ from ESQurey import EsQueryCrashUidCount
 from ESQurey import EsQueryWeiboFromValue
 from ESQurey import EsCrashQueryParams
 from ESQurey import EsQueryTop20CrashLog
-from Request_Performance import InsertUtils
-from Request_Performance import WorkbookManager
+from ManagerUtils import WorkbookManager
+from ManagerUtils import WriteEmail
 from Request_Performance import RequestParams
-from ESQurey import EsQueryHelper
-from JiraCreate import JiraCreateHelper
-import WriteEmail
-import xlsxwriter
-import os,sys
-import difflib
 import time
 
 top_number=10
@@ -52,7 +46,7 @@ def grabData():
 		tableinfo2['filepath']=filepath2
 		tableinfo2['sheet']=0
 		tableinfo2['theme']=str(platform)+'影响用户数('+str(date)+')'
-		tableinfo2['title']=['序号','微博版本','影响用户数']
+		tableinfo2['title']=['序号','微博版本','fingerprint','影响用户数']
 		tablelist.append(tableinfo2)
 
 		# 影响用户深度Top10的crash统计
