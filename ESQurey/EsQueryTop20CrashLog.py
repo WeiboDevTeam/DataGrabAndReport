@@ -75,9 +75,9 @@ class EsQueryTop20CrashLog(EsQueryJob):
 					self.updateMatchedList(data_list,'uid',jsonlog,content,reason,item.get('doc_count'))
 
 			sortedList = self.sortDataList(data_list,len(header)-1)
-			if(fromvalue.endswith('5010')):
-				jiraCreater = JiraCreateHelper.JiraCreateHelper()
-				jiraCreater.createJiraIssue(sortedList)
+			# if(fromvalue.endswith('5010')):
+			jiraCreater = JiraCreateHelper.JiraCreateHelper()
+			jiraCreater.createJiraIssue(sortedList)
 
 			self.writeSortedToExcel(header,sortedList)
 		else:
@@ -109,7 +109,7 @@ class EsQueryTop20CrashLog(EsQueryJob):
 		index = 1			
 		for data in data_list:
 			row=[]
-			row.append(data.get('crashlog'))
+			row.append(data.get('jsonlog'))
 			row.append(data.get('fingerprint'))
 			row.append(data.get('counts'))
 			utils.write_crash_data_with_yxis(self.worksheet,row,header,index,0)

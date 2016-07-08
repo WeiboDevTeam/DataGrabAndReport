@@ -52,18 +52,25 @@ class JiraCreateHelper(object):
 			version = JiraCreateHelper.getVersion(fromvalue)
 
 			try:
-				issue = jiraCreator.queryJiraIssue(projectKey, [fingerprint,crashLogInfo['jsonlog'][0:72]])
-				print issue
-				if(issue == None):
+				issues = jiraCreator.queryJiraIssue(projectKey, [fingerprint,crashLogInfo['jsonlog'][0:72]])
+				if(issues == None):
 					#create new jira issue
+					print 'query nothing'
 					issue = jiraCreator.outPutToJira(crashLogInfo,projectKey,version)
 					pass
 				else:
-					description = issue['description']
-					find = description.find(crashLogInfo['jsonlog'])
-					print find
-					if(find!=-1):
+					find = False
+					for issue in issues:
 
+						description = issue['description']
+						index = description.find(crashLogInfo['jsonlog'])
+						print index
+						if(index!=-1):
+							find=True
+							print crashLogInfo['jsonlog'],description
+							break
+					print 'already create jira :'+str(find)
+					if(find):
 						findversion = False
 						affectVersions = issue['affectsVersions']
 						for versionInfo in affectVersions:

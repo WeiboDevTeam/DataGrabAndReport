@@ -16,7 +16,7 @@ class JiraCreator(object):
 	ISSUE_TYPE_ID = "1";
 	PRIORITY_ID = "3";
 	ES_CRASH_URL='''http://sla.weibo.cn:5601/app/kibana#/discover/New_Discover_mweibo_clent_crash?'''
-	ES_CRASH_QUERY_STRING = '''(query:(query_string:(analyze_wildcard:!t,query:'programname:mweibo_client_crash AND fingerprint:%s AND jsoncontent.from:%s')))'''
+	ES_CRASH_QUERY_STRING ='''(filters:!((query:(match:(jsoncontent.reson:(query:'%s',type:phrase))))),query:(query_string:(analyze_wildcard:!t,query:'programname:mweibo_client_crash AND fingerprint:%s AND jsoncontent.from:%s')))'''
 	
 
 	ISSUE_STATUS_OPEN = 1
@@ -59,7 +59,7 @@ class JiraCreator(object):
 			sudsDict['assignee'] = 'guizhong'
 		
 		sudsDict['duedate']= datetime.datetime.now()
-		sudsDict['affectsVersions'] = [{'name':version}]
+		sudsDict['affectsVersions'] = [{'id':'versions','name':version}]
 		print sudsDict
 		newIssue = self.session.jira1.createIssue(self.auth, sudsDict)
 		time.sleep(1)
@@ -83,10 +83,9 @@ class JiraCreator(object):
 			return None
 		if isinstance(terms, (list, tuple)):
 			terms = ' '.join(terms)
-		issues = self.session.jira1.getIssuesFromTextSearchWithProject(self.auth, [project_key], terms, 1)
-		if(issues != None and (len(issues) == 1)):
-			issue = issues[0]
-			return issue
+		issues = self.session.jira1.getIssuesFromTextSearchWithProject(self.auth, [project_key], terms, 3)
+		if(issues != None and (len(issues) >	 0)):
+			return issues
 		return None
 
 	def getRemoteVersion(self,project_key,version):
@@ -117,7 +116,7 @@ class JiraCreator(object):
 			return summary
 
 	def createJiraDesc(self,crashLog):
-		es_query = JiraCreator.ES_CRASH_QUERY_STRING % (crashLog.get('fingerprint'),crashLog.get('fromvalue'))
+		es_query = JiraCreator.ES_CRASH_QUERY_STRING % (crashLog.get('reason'), crashLog.get('fingerprint'),crashLog.get('fromvalue'))
 		es_query_body = {'_g':'(time:(from:now-12h,to:now))','_a':es_query}
 		es_query_url = JiraCreator.ES_CRASH_URL+urllib.urlencode(es_query_body)
 		desc="log fingerprint: "+crashLog.get('fingerprint')+ \
@@ -126,5 +125,7 @@ class JiraCreator(object):
 
 		if(crashLog.get('uid') != None):
 			desc = desc+"\ncrash uid: " + crashLog.get('uid')
+		if(crashLog.get('counts') != None):
+			desc = desc+"\ncrash count: " + str(crashLog.get('counts'))
 		print desc
 		return desc
