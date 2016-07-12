@@ -26,7 +26,6 @@ fromfield="jsoncontent.from"
 versionfield="jsoncontent.weibo_version"
 systems=['Android',"iphone"]
 
-
 class CrashHandler(object):
 	def __init__(self):
 		self.interval=1		

@@ -5,15 +5,9 @@ from ESQurey import EsQueryCrashUidCount
 from ESQurey import EsQueryWeiboFromValue
 from ESQurey import EsCrashQueryParams
 from ESQurey import EsQueryTop20CrashLog
-from ManagerUtils import InsertUtils
 from ManagerUtils import WorkbookManager
 from ManagerUtils import WriteEmail
 from Request_Performance import RequestParams
-from ESQurey import EsQueryHelper
-from JiraCreate import JiraCreateHelper
-import xlsxwriter
-import os,sys
-import difflib
 import time
 
 top_number=10

@@ -40,9 +40,15 @@ class EsQueryParams(object):
 
 	def getPort(self):
 		return self.port
+
+	def setTimeFrom(self,timeFrom):
+		self.timeFrom=timeFrom
 	
 	def getTimeFrom(self):
 		return self.timeFrom
+
+	def setTimeTo(self,timeTo):
+		self.timeTo=timeTo
 
 	def getTimeTo(self):
 		return self.timeTo
