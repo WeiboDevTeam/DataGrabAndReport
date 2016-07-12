@@ -27,7 +27,7 @@ class JiraCreateHelper(object):
 		if(crashLogList == False or len(crashLogList) == 0):
 			return False
 
-		MAX_LENGTH = 10
+		MAX_LENGTH = 20
 		length = len(crashLogList);
 		if(length > MAX_LENGTH):
 			crashLogList = crashLogList[0:MAX_LENGTH]
@@ -44,7 +44,8 @@ class JiraCreateHelper(object):
 			fromvalue = crashLogInfo['fromvalue']
 			crashReason = crashLogInfo['reason']
 
-			if((fromvalue.endswith('5010')) and (JiraCreateHelper.isExceptCrashLog(crashReason))):
+			isAndroid = fromvalue.endswith('5010')
+			if(isAndroid and (JiraCreateHelper.isExceptCrashLog(crashReason))):
 				continue
 			fingerprint = crashLogInfo['fingerprint']
 
@@ -52,7 +53,12 @@ class JiraCreateHelper(object):
 			version = JiraCreateHelper.getVersion(fromvalue)
 
 			try:
-				issues = jiraCreator.queryJiraIssue(projectKey, [fingerprint,crashLogInfo['jsonlog'][0:72]])
+				if(isAndroid):
+					query = [fingerprint,crashLogInfo['jsonlog'][0:72]]
+				else:
+					query = fingerprint
+
+				issues = jiraCreator.queryJiraIssue(projectKey,query)
 				if(issues == None):
 					#create new jira issue
 					print 'query nothing'
@@ -60,15 +66,17 @@ class JiraCreateHelper(object):
 					pass
 				else:
 					find = False
-					for issue in issues:
-
-						description = issue['description']
-						index = description.find(crashLogInfo['jsonlog'])
-						print index
-						if(index!=-1):
-							find=True
+					if(isAndroid):
+						for issue in issues:
+							description = issue['description']
+							index = description.find(crashLogInfo['jsonlog'])
+							print index
 							print crashLogInfo['jsonlog'],description
-							break
+							if(index!=-1):
+								find=True
+								break
+					else:
+						find = True
 					print 'already create jira :'+str(find)
 					if(find):
 						findversion = False

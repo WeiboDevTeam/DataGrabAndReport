@@ -53,7 +53,7 @@ class EsQueryCrashInfluenceDepth(EsQueryJob):
 						count = crash_fingerprint.get('doc_count')
 						jsonlog = self.__queryCrashLogByFingerPrinter(fromvalue, fingerprint)
 						filterJsonlog = self.__filterCrashContent(jsonlog)
-						result_item={"uid":uid,'fromvalue':fromvalue, "reason":reason,"fingerprint":fingerprint,"count":count,"jsonlog":filterJsonlog}
+						result_item={"uid":uid,'fromvalue':fromvalue, "reason":reason,"fingerprint":fingerprint,"counts":count,"jsonlog":filterJsonlog}
 						data_list.append(result_item)
 			print len(data_list)
 			filteredList=[]
@@ -75,9 +75,9 @@ class EsQueryCrashInfluenceDepth(EsQueryJob):
 							if(ratio > threoldRatio):
 								needAppend = False
 								if(filteredCrashItem['uid'] == item['uid']):
-									filteredCrashItem['count']=filteredCrashItem['count']+item['count']
+									filteredCrashItem['counts']=filteredCrashItem['counts']+item['counts']
 								else:
-									if(filteredCrashItem['count']<item['count']):
+									if(filteredCrashItem['counts']<item['counts']):
 										needAppend = True
 										filteredList.remove(filteredCrashItem)
 									else:
@@ -90,7 +90,7 @@ class EsQueryCrashInfluenceDepth(EsQueryJob):
 					if(needAppend):
 						filteredList.append(item)	
 
-			filteredList.sort(key=lambda k: (k.get('count', 0)),reverse=True)
+			filteredList.sort(key=lambda k: (k.get('counts', 0)),reverse=True)
 			print 'after filtered length ' +str(len(filteredList))
 			# jiraCreater = JiraCreateHelper.JiraCreateHelper()
 			# jiraCreater.createJiraIssue(filteredList)
@@ -116,7 +116,7 @@ class EsQueryCrashInfluenceDepth(EsQueryJob):
 			row.append(data['jsonlog'])
 			# row.append(data['fingerprint'])
 			#row.append(data['jira_status'])
-			row.append(data['count'])
+			row.append(data['counts'])
 			utils.write_crash_data_with_yxis(self.worksheet,row,header,index,0)
 			index += 1
 		self.workbook.close()
