@@ -5,6 +5,7 @@ import xlrd,os,sys,time,smtplib,email
 from email import encoders
 from email.mime.text import MIMEText
 from email.header import Header
+from email.utils import COMMASPACE
 import base64
 
 class WriteEmail(object):
@@ -79,7 +80,10 @@ class WriteEmail(object):
 			td='<td>'+str(i+1)+'</td>'
 			for j in range(len(data[i])):
 				cellData=data[i][j]
-				tip='<td>'+str(cellData)+'</td>'
+				if isinstance(cellData,int):
+					tip='<td>'+str(cellData)+'</td>'
+				else:
+					tip='<td>'+cellData+'</td>'
 				td=td+tip
 			tr='<tr>'+td+'</tr>'
 			tr=tr.encode('utf-8')
@@ -106,25 +110,33 @@ class WriteEmail(object):
 		return data
 
 	# 发送邮件
-	def mailSend(self,mail):
+	def mailSend(self,mail,platform):
 		# 设置发件人
-		sender = 'xiaofei9@staff.weibo.com'
+		sender = 'guizhong@staff.weibo.com'
+		testReceiver = '644824318@qq.com'
 		# 设置接收人
-		receiver=['xiaofei9@staff.weibo.com']
+		if(platform == u'Android'):
+			receiver = ['WeiboAndroid_RD@staff.sina.com.cn']
+			# receiver = [testReceiver]
+		else:
+			receiver = ['WB_iOS_DEV@staff.sina.com.cn']
+			# receiver = ['guizhong@staff.weibo.com']
 		# 设置邮件主题
-		subject='每日crash反馈'
+		subject=platform+'每日crash反馈'
 		#设置发件服务器，即smtp服务器
 		smtpserver='mail.staff.sina.com.cn'
 		# 配置端口
 		smtpport=25
 		#设置登陆名称
-		username='xiaofei9'
+		username='guizhong'
 		#设置登陆密码
-		password='Wazm20160606'
+		password='19880808.lgz6'
 		#实例化写邮件到正文区，邮件正文区需要以HTML文档形式写入
 		msg= MIMEText(mail,'html','utf-8')
 		#输入主题
 		msg['Subject']= subject
+		msg['From']= 'guizhong'
+		msg['To']= COMMASPACE.join(receiver)
 		#调用邮件发送方法，需配合导入邮件相关模块
 		smtp = smtplib.SMTP(smtpserver,smtpport)
 		#输入用户名，密码，登陆服务器
