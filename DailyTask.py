@@ -57,7 +57,7 @@ def grabData(platform):
 	tableinfo3['filepath']=filepath3
 	tableinfo3['sheet']=0
 	tableinfo3['theme']=str(platform)+'端Top'+str(top_number)+'的crash('+str(date)+')'
-	tableinfo3['title']=['序号','crash原因','影响用户数']
+	tableinfo3['title']=['序号','crash原因','jira状态','jira分配人','影响用户数']
 	tablelist.append(tableinfo3)
 	
 	# 影响用户深度Top10的crash统计

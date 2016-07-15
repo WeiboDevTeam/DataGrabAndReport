@@ -52,6 +52,8 @@ class JiraCreateHelper(object):
 			projectKey = JiraCreateHelper.getProjectKey(fromvalue)
 			version = JiraCreateHelper.getVersion(fromvalue)
 
+			print crashLogInfo['jsonlog']
+			issueFind = None
 			try:
 				if(isAndroid):
 					query = [fingerprint,crashLogInfo['jsonlog'][0:72]]
@@ -62,7 +64,7 @@ class JiraCreateHelper(object):
 				if(issues == None):
 					#create new jira issue
 					print 'query nothing'
-					issue = jiraCreator.outPutToJira(crashLogInfo,projectKey,version)
+					issueFind = jiraCreator.outPutToJira(crashLogInfo,projectKey,version)
 					pass
 				else:
 					find = False
@@ -70,31 +72,36 @@ class JiraCreateHelper(object):
 						for issue in issues:
 							description = issue['description']
 							index = description.find(crashLogInfo['jsonlog'])
-							print index
-							print crashLogInfo['jsonlog'],description
 							if(index!=-1):
 								find=True
+								issueFind = issue
+								print description
 								break
 					else:
 						find = True
+						issueFind = issues[0]
 					print 'already create jira :'+str(find)
 					if(find):
 						findversion = False
 						affectVersions = issue['affectsVersions']
-						for versionInfo in affectVersions:
-							if(versionInfo['name']==version):
-								findversion = True
-								break
-						if(findversion == False):
-							status = issue['status']
-							if(status == '5' or status == '6'):
-								issue['status'] = '7' #reopen
-							jiraCreator.updateJiraVersion(issue, crashLogInfo, version)
-						else:
-							pass
+						# for versionInfo in affectVersions:
+						# 	if(versionInfo['name']==version):
+						# 		findversion = True
+						# 		break
+						# if(findversion == False):
+						# 	status = issue['status']
+						# 	if(status == '5' or status == '6'):
+						# 		issue['status'] = '7' #reopen
+						# 	jiraCreator.updateJiraVersion(issue, crashLogInfo, version)
+						# else:
+						# 	pass
 					else:
-						issue = jiraCreator.outPutToJira(crashLogInfo,projectKey,version)
-					crashLogInfo['jira_status'] = JiraCreateHelper.JIRA_STATUS[(int)(issue['status'])]
+						issueFind = jiraCreator.outPutToJira(crashLogInfo,projectKey,version)
+						print "didn't find "
+					print issueFind
+					if(issueFind != None):
+						crashLogInfo['jira_status'] = JiraCreateHelper.JIRA_STATUS[issueFind['status']]
+						crashLogInfo['jira_assignee'] = issueFind['assignee']
 			except Exception, e:
 				print str(e)
 			else:

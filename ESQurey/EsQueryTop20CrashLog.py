@@ -45,7 +45,7 @@ class EsQueryTop20CrashLog(EsQueryJob):
 		fromvalue=self.fromvalues[0]
 		if json_data.get('aggregations')!=None:
 			buckets= json_data['aggregations']['count_crash']['buckets']
-			header=['crashlog','counts']		
+			header=['crashlog','counts', 'jira_status', 'jira_assignee']		
 
 			data_list={}
 			for item in buckets:
@@ -111,6 +111,16 @@ class EsQueryTop20CrashLog(EsQueryJob):
 			row=[]
 			row.append(data.get('jsonlog'))
 			# row.append(data.get('fingerprint'))
+			jira_status = data.get('jira_status')
+			if(jira_status != None):
+				row.append(jira_status)
+			else:
+				row.append("No Jira")
+			jira_assignee = data.get('jira_assignee')
+			if(jira_assignee != None):
+				row.append(jira_assignee)
+			else:
+				row.append("None")
 			row.append(data.get('counts'))
 			utils.write_crash_data_with_yxis(self.worksheet,row,header,index,0)
 			index += 1
