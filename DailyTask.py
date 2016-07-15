@@ -8,7 +8,7 @@ from ESQurey import EsQueryTop20CrashLog
 from ManagerUtils import WorkbookManager
 from ManagerUtils import WriteEmail
 from Request_Performance import RequestParams
-import time
+from datetime import timedelta, date
 
 top_number=10
 searchformat="%Y.%m.%d"
@@ -33,7 +33,7 @@ def grabData(platform):
 	fromvalues = test.doRequest()
 	params.setFromValues(fromvalues)
 
-	date=time.strftime(searchformat,time.localtime(params.getTimeTo()/1000))
+	tdate=(date.today()-timedelta(1)).strftime(searchformat)
 
 	#test = EsQueryCrashUidCount(params)
 	#test.doRequest()
@@ -45,7 +45,7 @@ def grabData(platform):
 	tableinfo2={}
 	tableinfo2['filepath']=filepath2
 	tableinfo2['sheet']=0
-	tableinfo2['theme']=str(platform)+'影响用户数('+str(date)+')'
+	tableinfo2['theme']=str(platform)+'影响用户数('+str(tdate)+')'
 	tableinfo2['title']=['序号','微博版本','影响用户数']
 	tablelist.append(tableinfo2)
 
@@ -56,7 +56,7 @@ def grabData(platform):
 	tableinfo3={}
 	tableinfo3['filepath']=filepath3
 	tableinfo3['sheet']=0
-	tableinfo3['theme']=str(platform)+'端Top'+str(top_number)+'的crash('+str(date)+')'
+	tableinfo3['theme']=str(platform)+'端Top'+str(top_number)+'的crash('+str(tdate)+')'
 	tableinfo3['title']=['序号','crash原因','影响用户数']
 	tablelist.append(tableinfo3)
 	
@@ -67,7 +67,7 @@ def grabData(platform):
 	tableinfo={}
 	tableinfo['filepath']=filepath
 	tableinfo['sheet']=0
-	tableinfo['theme']=str(platform)+'影响用户深度Top'+str(top_number)+'的crash('+str(date)+')  单个用户单个crash的影响次数/天'
+	tableinfo['theme']=str(platform)+'影响用户深度Top'+str(top_number)+'的crash('+str(tdate)+')  单个用户单个crash的影响次数/天'
 	tableinfo['title']=['序号','uid','crash内容','crash次数']
 	tablelist.append(tableinfo)
 

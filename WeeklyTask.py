@@ -19,7 +19,7 @@ def doTask():
 def sendMail(tablelist):
 	writeEmail=WriteEmail.WriteEmail()
 	content=writeEmail.getMailContent(tablelist,top_number)
-	writeEmail.mailSend(content)
+	writeEmail.mailSend(content,"")
 
 def grabData():
 	platforms = ['Android','iphone']
@@ -34,8 +34,9 @@ def grabData():
 		print fromvalues
 
 		datefrom=time.strftime(searchformat,time.localtime(params.getTimeFrom()/1000))
-		dateto=time.strftime(searchformat,time.localtime(params.getTimeTo()/1000))
+		dateto=time.strftime(searchformat,time.localtime((params.getTimeTo()/1000)- 60))
 		tag=str(datefrom)+'-'+str(dateto)
+		print tag
 
 		# 抓取最近2版top_number的crash
 		crash=EsQureyTopCrashLastVersions.EsQureyTopCrashLastVersions(params)
