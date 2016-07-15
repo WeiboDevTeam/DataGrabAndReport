@@ -22,6 +22,7 @@ class EsQueryParams(object):
 		self.timeFrom = self.timeTo
 		endDay = (currentDay-timedelta(1)).strftime('%Y.%m.%d')
 		self.daysIndex.append(endDay)
+		currentDay= currentDay-timedelta(1) 
 		for i in range(0,interval):
 			self.timeFrom = (self.timeFrom - 24*60*60*1000)
 			currentDay = currentDay - timedelta(1)
