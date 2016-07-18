@@ -67,6 +67,7 @@ class EsQueryJob(object):
 		query={}
 		query["query"]={"filtered":{"filter":{"bool":{"must":self.__buildQueryMust(),"must_not":self.buildQueryMustNot()}}}}
 		query["aggs"]={"count_crash":self.buildQueryAgg()}
+		print query
 		return query
 
 	@abstractmethod
