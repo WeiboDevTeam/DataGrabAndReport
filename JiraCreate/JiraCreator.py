@@ -5,14 +5,13 @@ import datetime
 import time
 import random
 import urllib
+import ConfigParser
+
 __metaclass__=type
 class JiraCreator(object):
 	"""docstring for JiraCreator
 	   创建jira
 	"""
-	JIRA_URL = 'http://issue.internal.sina.com.cn/rpc/xmlrpc'
-	JIRA_USER = 'guizhong'
-	JIRA_PASS = '19880808.lgz6'
 	ISSUE_TYPE_ID = "1";
 	PRIORITY_ID = "3";
 	ES_CRASH_URL='''http://sla.weibo.cn:5601/app/kibana#/discover/New_Discover_mweibo_clent_crash?'''
@@ -27,10 +26,38 @@ class JiraCreator(object):
 
 	def __init__(self):
 		super(JiraCreator, self).__init__()
+		self.init_jira_config()
+
+	def init_jira_config(self):
+		config_read = ConfigParser.RawConfigParser()
+		config_read.read('./account.config')
+		secs = config_read.sections()
+		print secs
+		for sec in secs:
+			if sec == u'jira_config':
+				options = config_read.options(sec)
+				self.jira_config = {}
+				for key in options:
+					self.jira_config[key]=config_read.get(sec,key)
 
 	def login(self):
-		self.session = xmlrpclib.ServerProxy(JiraCreator.JIRA_URL)
-		self.auth = self.session.jira1.login(JiraCreator.JIRA_USER,JiraCreator.JIRA_PASS)
+		jira_url = self.jira_config.get('jira_url')
+		if(jira_url == None):
+			print 'jira_url is null'
+			return
+		
+		jira_user = self.jira_config.get('jira_user')
+		if(jira_user == None):
+			print 'jira_user is null'
+			return
+
+		jira_pwd = self.jira_config.get('jira_pwd')
+		if(jira_pwd == None):
+			print 'jira_pwd is null'
+			return
+
+		self.session = xmlrpclib.ServerProxy(jira_url)
+		self.auth = self.session.jira1.login(jira_user,jira_pwd)
 		print self.auth
 
 	def checkSession(self):
@@ -54,9 +81,9 @@ class JiraCreator(object):
 		sudsDict['description'] = self.createJiraDesc(crashLogInfo)
 
 		if(crashLogInfo['fromvalue'].endswith("3010")):
-			sudsDict['assignee'] = 'chengwei2'
+			sudsDict['assignee'] = self.jira_config.get('jira_ios_assign')
 		else:
-			sudsDict['assignee'] = 'guizhong'
+			sudsDict['assignee'] = self.jira_config.get('jira_android_assign')
 		
 		sudsDict['duedate']= datetime.datetime.now()
 		sudsDict['affectsVersions'] = [{'id':'versions','name':version}]
@@ -64,7 +91,7 @@ class JiraCreator(object):
 		newIssue = self.session.jira1.createIssue(self.auth, sudsDict)
 		time.sleep(1)
 
-		return newIssue['key']
+		return newIssue
 
 	def isNeedToUpdateIssue(self,issueKey):
 		if(self.checkSession() == False):

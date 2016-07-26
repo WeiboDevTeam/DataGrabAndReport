@@ -83,7 +83,7 @@ class JiraCreateHelper(object):
 					print 'already create jira :'+str(find)
 					if(find):
 						findversion = False
-						affectVersions = issue['affectsVersions']
+						affectVersions = issueFind['affectsVersions']
 						# for versionInfo in affectVersions:
 						# 	if(versionInfo['name']==version):
 						# 		findversion = True
@@ -102,6 +102,7 @@ class JiraCreateHelper(object):
 					if(issueFind != None):
 						crashLogInfo['jira_status'] = JiraCreateHelper.JIRA_STATUS[issueFind['status']]
 						crashLogInfo['jira_assignee'] = issueFind['assignee']
+						crashLogInfo['jira_id'] = issueFind['key']
 			except Exception, e:
 				print str(e)
 			else:
