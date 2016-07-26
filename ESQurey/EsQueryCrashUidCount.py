@@ -23,18 +23,18 @@ class EsQueryCrashUidCount(EsQueryJob):
 	def buildQueryMustNot(self):
 		
 		must_not=[]
-		must_not.append({"query":{"match":{"jsoncontent.subtype":{"query":"anr","type":"phrase"}}}})
+		# must_not.append({"query":{"match":{"jsoncontent.subtype":{"query":"anr","type":"phrase"}}}})
 		return must_not
 
 	def buildQueryAgg(self):
-		date={}
-		extended_bounds={"min": self.params.getTimeFrom(),"max": self.params.getTimeTo()} 
-		date["date_histogram"]={"field": "@timestamp","interval": "1d","time_zone": "Asia/Shanghai", "min_doc_count": 1,"extended_bounds":extended_bounds}
-		date["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}}}
+		# date={}
+		# extended_bounds={"min": self.params.getTimeFrom(),"max": self.params.getTimeTo()} 
+		# date["date_histogram"]={"field": "@timestamp","interval": "1d","time_zone": "Asia/Shanghai", "min_doc_count": 1,"extended_bounds":extended_bounds}
+		# date["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}}}
 
 		aggs={}
 		aggs["terms"]={"size":7,"field":"jsoncontent.from"}
-		aggs["aggs"]={"date":date}
+		aggs["aggs"]={"count_uid":{"cardinality":{"field":"jsoncontent.uid"}}}
 
 		return aggs
 
@@ -47,29 +47,29 @@ class EsQueryCrashUidCount(EsQueryJob):
 			
 			header=['version']
 
-			if len(buckets)>0:
-				sub_buckets=buckets[0]
-				dates=sub_buckets.get('date').get('buckets')
-				for i in range (0,interval):
-					ltime=time.localtime(dates[i].get('key')/1000)
-					timestr=time.strftime("%Y.%m.%d",ltime)
-					header.append(timestr)	
-				print header
+			
+			ltime=time.localtime(self.params.getTimeFrom()/1000)
+			timestr=time.strftime("%Y.%m.%d",ltime)
+			header.append(timestr)	
+			print header
 			utils.write_header(self.worksheet,0,0,header)		
-				
+			
+			dictResult={}
 			index = 1
 			for item in buckets:
 				data=[]
 				# 从from值中提取版本号
-				data.append(item.get('key')[2:5]) 
-				sub_buckets = item.get('date').get('buckets')		
-				for i in range(0,len(sub_buckets)):
-					if i >= interval:
-						break
-					data.append(sub_buckets[i].get('count_uid').get('value'))
+				fromValue = item.get('key')
+				count_uid = item.get('count_uid').get('value')
+				data.append(fromValue[2:5]) 
+				data.append(count_uid)
 				print data
+				
 				utils.write_crash_data_with_yxis(self.worksheet,data,header,index,0)
+				dictResult[fromValue]=count_uid
 				index += 1
 			self.workbook.close()
+			return dictResult
 		else:
 			print 'result: '+str(json_data)
+			return None
