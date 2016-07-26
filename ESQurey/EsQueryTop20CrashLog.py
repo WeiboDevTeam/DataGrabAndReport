@@ -58,9 +58,11 @@ class EsQueryTop20CrashLog(EsQueryJob):
 						# 判断crash的content中是否包含crash的原因
 						fingerprint = f.get('key')
 						reasons=f.get('reasons').get('buckets')
-						crashReason = ''
-						for reason in reasons:
-							crashReason = reason.get('key')
+						crashItem = self.__queryCrashLogByFingerPrinter(fromvalue, fingerprint)
+						if(crashItem == None):
+							continue
+						# jsonlog = crashItem.get('jsonlog')
+						crashReason = crashItem.get('crash_reason')
 						if crashReason in content:
 							reson_content=content
 						else:
@@ -72,18 +74,23 @@ class EsQueryTop20CrashLog(EsQueryJob):
 
 						self.updateMatchedList(data_list,'uid',filter_content,fingerprint,crashReason,count)
 				else:
-					reason = item.get('reason').get('buckets')[0].get('key')
-					jsonlog = self.__queryCrashLogByFingerPrinter(fromvalue, content)
+					crashItem = self.__queryCrashLogByFingerPrinter(fromvalue, content)
+					if(crashItem == None):
+						econtinue
+					jsonlog = crashItem.get('jsonlog')
+					reason = crashItem.get('crash_reason')
 					self.updateMatchedList(data_list,'uid',jsonlog,content,reason,item.get('doc_count'))
 
 			sortedList = self.sortDataList(data_list,len(header)-1)
 			# if(fromvalue.endswith('5010')):
-			# jiraCreater = JiraCreateHelper.JiraCreateHelper()
-			# jiraCreater.createJiraIssue(sortedList)
+			jiraCreater = JiraCreateHelper.JiraCreateHelper()
+			jiraCreater.createJiraIssue(sortedList)
 
 			self.writeSortedToExcel(header,sortedList)
+			return sortedList
 		else:
 			print 'result: '+str(json_data)
+			return None
 
 
 	def __queryCrashLogByFingerPrinter(self,fromvalue,fingerprint):

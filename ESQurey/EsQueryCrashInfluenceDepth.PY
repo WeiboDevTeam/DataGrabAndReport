@@ -52,6 +52,8 @@ class EsQueryCrashInfluenceDepth(EsQueryJob):
 						fingerprint = crash_fingerprint.get('key')
 						count = crash_fingerprint.get('doc_count')
 						jsonlog = self.__queryCrashLogByFingerPrinter(fromvalue, fingerprint)
+						if(jsonlog == None):
+							continue
 						filterJsonlog = self.__filterCrashContent(jsonlog)
 						result_item={"uid":uid,'fromvalue':fromvalue, "reason":reason,"fingerprint":fingerprint,"counts":count,"jsonlog":filterJsonlog}
 						data_list.append(result_item)
@@ -96,12 +98,18 @@ class EsQueryCrashInfluenceDepth(EsQueryJob):
 			# jiraCreater.createJiraIssue(filteredList)
 
 			self.__writeToExcel(filteredList)
+			return filteredList
 		else:
 			print 'result: '+str(json_data)
+			return None
 
 	def __queryCrashLogByFingerPrinter(self,fromvalue,fingerprint):
 		querySingerCrashLog = EsQueryCrashSingleLog	(self.params)
-		return querySingerCrashLog.doRequest(fromvalue,fingerprint)
+		crashLog = querySingerCrashLog.doRequest(fromvalue,fingerprint)
+		if(crashLog != None):
+			return crashLog.get("jsonlog")
+		else:
+			return None
 
 	def __writeToExcel(self,data_list):
 		utils=InsertUtils.InsertUtils()		
