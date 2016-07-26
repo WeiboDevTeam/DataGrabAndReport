@@ -61,8 +61,10 @@ class EsQueryCrashUidCount(EsQueryJob):
 				# 从from值中提取版本号
 				fromValue = item.get('key')
 				count_uid = item.get('count_uid').get('value')
+				count = item.get('doc_count')
 				data.append(fromValue[2:5]) 
 				data.append(count_uid)
+				data.append(count)
 				print data
 				
 				utils.write_crash_data_with_yxis(self.worksheet,data,header,index,0)
