@@ -58,7 +58,7 @@ def grabData(platform):
 	tableinfo2['filepath']=filepath2
 	tableinfo2['sheet']=0
 	tableinfo2['theme']=str(platform)+'影响用户数('+str(tdate)+')'
-	tableinfo2['title']=['序号','微博版本','影响用户数']
+	tableinfo2['title']=['序号','微博版本','影响用户数','crash次数']
 	tablelist.append(tableinfo2)
 
 	# 抓取Top10的crash
