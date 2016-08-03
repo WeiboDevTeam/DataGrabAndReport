@@ -110,9 +110,18 @@ class JiraCreator(object):
 			return None
 		if isinstance(terms, (list, tuple)):
 			terms = ' '.join(terms)
-		issues = self.session.jira1.getIssuesFromTextSearchWithProject(self.auth, [project_key], terms, 3)
+		issues = self.session.jira1.getIssuesFromTextSearchWithProject(self.auth, [project_key], terms, 5)
 		if(issues != None and (len(issues) >	 0)):
 			return issues
+		return None
+
+	def queryIssueById(self,issueId):
+		if(self.checkSession() == False):
+			print 'please login first'
+			return None
+		issue = self.session.jira1.getIssue(self.auth, issueId)
+		if(issue != None ):
+			return issue
 		return None
 
 	def getRemoteVersion(self,project_key,version):

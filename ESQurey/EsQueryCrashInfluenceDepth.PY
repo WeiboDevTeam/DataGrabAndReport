@@ -21,6 +21,10 @@ class EsQueryCrashInfluenceDepth(EsQueryJob):
 
 	def initFromValues(self):
 		self.fromvalues = self.params.getFromValues()[0:1]
+		# for fromvalue in self.params.getFromValues():
+		# 	if fromvalue.find('672')>=0:
+		# 		self.fromvalues = [fromvalue]
+		# 		break
 
 	def getWorkbookName(self):
 		return "影响用户最深crash.xlsx"

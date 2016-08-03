@@ -4,14 +4,26 @@ from ESQurey import EsQueryCrashInfluenceDepth
 from ESQurey import EsQueryCrashUidCount
 from ESQurey import EsQueryWeiboFromValue
 from ESQurey import EsCrashQueryParams
+from ESQurey import EsQueryCrashSingleLog
 from ESQurey import EsQueryTop20CrashLog
 from ManagerUtils import WorkbookManager
 from ManagerUtils import WriteEmail
 from Request_Performance import RequestParams
 from datetime import timedelta, date
+from AnalysizeDailyCrash import CalculateDailyCrash
 
 top_number=10
 searchformat="%Y.%m.%d"
+
+def test():
+	params = EsCrashQueryParams.EsCrashQueryParams(3, "iphone");
+	test = EsQueryWeiboFromValue.EsQueryWeiboFromValue(params)
+	fromvalues = test.doRequest()
+	params.setFromValues(fromvalues)
+	querySingelLog = EsQueryCrashSingleLog.EsQueryCrashSingleLog(params)
+	printfingers=['e283c1a525c2e63640ee702a1cf1b1f6']
+	for printfinger in printfingers:
+		print querySingelLog.doRequest('1068093010',printfinger)
 
 def doTask():
 	print "do timer task"
@@ -40,7 +52,7 @@ def grabData(platform):
 
 	# 影响用户数统计
 	count=EsQueryCrashUidCount.EsQueryCrashUidCount(params)
-	count.doRequest()
+	crashUidCount=count.doRequest()
 	filepath2=count.getWorkbookPath()
 	tableinfo2={}
 	tableinfo2['filepath']=filepath2
@@ -51,7 +63,7 @@ def grabData(platform):
 
 	# 抓取Top10的crash
 	top_crash=EsQueryTop20CrashLog.EsQueryTop20CrashLog(params)
-	top_crash.doRequest()
+	topCrashList=top_crash.doRequest()
 	filepath3=top_crash.getWorkbookPath()
 	tableinfo3={}
 	tableinfo3['filepath']=filepath3
@@ -60,6 +72,9 @@ def grabData(platform):
 	tableinfo3['title']=['序号','crash原因','jira状态','jira分配人','crash次数']
 	tablelist.append(tableinfo3)
 	
+	calResult = calculateCrashRatio(crashUidCount,topCrashList)
+	CalculateDailyCrash.writeDataToFile(calResult,tdate.replace('.','')+'.csv')
+
 	# 影响用户深度Top10的crash统计
 	test = EsQueryCrashInfluenceDepth.EsQueryCrashInfluenceDepth(params)
 	test.doRequest()
@@ -73,8 +88,32 @@ def grabData(platform):
 
 	return tablelist
 
+def calculateCrashRatio(crashUidCount,topCrashList): 
+	if(len(topCrashList)>0):
+		resultList=[]
+		fromvalue=topCrashList[0].get('fromvalue')
+		totalCrashCount=crashUidCount.get(fromvalue)
+		if(totalCrashCount ==None):
+			print 'total crash uid count is none of version %s' % fromvalue[2:5]
+		for topCrash in topCrashList:
+			topCrashCount = topCrash.get('counts')
+			crashRatio = (topCrashCount+0.0)/totalCrashCount
+			resultItem = {}
+			resultItem['fingerprint'] = topCrash.get('fingerprint')
+			resultItem['fromvalue'] = topCrash.get('fromvalue')
+			resultItem['jsonlog'] = topCrash.get('jsonlog')
+			resultItem['counts'] = str(topCrash.get('counts'))
+			resultItem['crash_total_count']=str(totalCrashCount)
+			resultItem['crash_ratio']=str('%.4f' % crashRatio)
+			resultItem['jira_id'] = topCrash.get('jira_id')
+			resultItem['jira_assignee'] = topCrash.get('jira_assignee')
+			resultItem['component'] = 'None'
+			resultList.append(resultItem)
+		return resultList
+
 def main():
 	doTask()
+	
 
 if __name__ == '__main__':
 	main()

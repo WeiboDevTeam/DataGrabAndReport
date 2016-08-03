@@ -22,6 +22,10 @@ class EsQueryTop20CrashLog(EsQueryJob):
 
 	def initFromValues(self):
 		self.fromvalues = self.params.getFromValues()[0:1]
+		# for fromvalue in self.params.getFromValues():
+		# 	if fromvalue.find('672')>=0:
+		# 		self.fromvalues = [fromvalue]
+		# 		break
 		
 	def getWorkbookName(self):
 		return 'Top20的crash.xlsx'
