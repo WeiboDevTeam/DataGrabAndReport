@@ -3,6 +3,7 @@ from AnalysizeDailyCrash import CalculateDailyCrash
 import sys,os
 import xlsxwriter
 import ConfigParser
+import collections
 
 def __handleAfterCal(resultDict):
 	if resultDict!=None:
@@ -16,8 +17,10 @@ def __handleAfterCal(resultDict):
 			if(component != None and component != u'None'):
 				key = component
 			if(ratioDict.has_key(key)):
-				print ratioData
-				for dateKey in ratioDict.get(key).keys():
+				# print ratioData
+				dateList = sorted(ratioDict.get(key).keys())
+				sortedDict = collections.OrderedDict()
+				for dateKey in dateList:
 					#同一天的数据相加，但是总数不相加
 					data = []
 					value = ratioDict.get(key)
@@ -39,9 +42,14 @@ def __handleAfterCal(resultDict):
 					elif(tmpData != None and tmpData != u'None'):
 						data.append(tmpData[1])
 					
-					value[dateKey]=tuple(data)
+					sortedDict[dateKey]=tuple(data)
 			else:
-				ratioDict[key]=ratioData
+				sortedDict = collections.OrderedDict()
+				sortedDate = sorted(ratioData.keys())
+				for keyDate in sortedDate:
+					sortedDict[keyDate] = ratioData[keyDate]
+				ratioDict[key]=sortedDict
+			print ratioDict[key]
 		return ratioDict
 	else:
 		return None
@@ -143,6 +151,7 @@ for platform in platforms:
 											'data_labels': {'value': True,'position': 'above'}})
 						chart.set_x_axis({'label_position': 'high','name': 'Date'})
 						chart.set_y_axis({'name': 'Crash Percentage'})
+						chart.set_size({'x_scale':1.2,'y_scale':1.2})
 						worksheet.insert_chart(chartPositionIndexX,chartPositionIndexY,chart)
 						if(chartNum%2 == 0):
 							chartPositionIndexX += gapRows

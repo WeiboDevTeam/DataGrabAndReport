@@ -69,6 +69,15 @@ class CalculateDailyCrash(object):
 		else:
 			return (item.pop('counts'),item.pop('crash_total_count'),item.pop('crash_ratio'))
 
+	def __updateJiraInfo(self,itemForUpdate,jira_id,jira_assignee):
+		if itemForUpdate == None:
+			return
+		else:
+			if(jira_id != None and jira_id != u'None'):
+				itemForUpdate['jira_id'] = jira_id
+			if(jira_assignee != None and jira_assignee != u'None'):
+				itemForUpdate['jira_assignee'] = jira_assignee
+
 	# def __queryCrashComponent(self,resultList):
 	# 	if(resultList == None):
 	# 		pass
@@ -124,8 +133,7 @@ class CalculateDailyCrash(object):
 							if(keyitem==item.get("fingerprint")):
 								findedItem=data.pop(data.index(item))
 								topMaxCrashCollection.get(keyitem).get('data')[fileName]=self.__getAppendData(findedItem)
-								topMaxCrashCollection.get(keyitem)['jira_id']=findedItem['jira_id']
-								topMaxCrashCollection.get(keyitem)['jira_assignee']=findedItem['jira_assignee']
+								self.__updateJiraInfo(topMaxCrashCollection.get(keyitem),findedItem['jira_id'],findedItem['jira_assignee'])
 								break
 
 				for item in topMaxList:
@@ -140,8 +148,7 @@ class CalculateDailyCrash(object):
 					else:
 						item['data']={fileName:self.__getAppendData(item)}
 						collectionInfo = item
-					collectionInfo['jira_id']=item['jira_id']
-					collectionInfo['jira_assignee']=item['jira_assignee']
+					self.__updateJiraInfo(collectionInfo,item['jira_id'],item['jira_assignee'])
 					topMaxCrashCollection[fingerprint]=collectionInfo
 				for sortedItem in data:
 					fingerprint = sortedItem.get("fingerprint")
@@ -151,8 +158,7 @@ class CalculateDailyCrash(object):
 					else:
 						sortedItem['data']={fileName:self.__getAppendData(sortedItem)}
 						collectionInfo = sortedItem
-					collectionInfo['jira_id']=sortedItem['jira_id']
-					collectionInfo['jira_assignee']=sortedItem['jira_assignee']
+					self.__updateJiraInfo(collectionInfo,sortedItem['jira_id'],sortedItem['jira_assignee'])
 					dataCollection[fingerprint]=collectionInfo
 				for keyitem in topMaxCrashCollection.keys():
 					data = topMaxCrashCollection.get(keyitem).get('data')
