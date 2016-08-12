@@ -10,8 +10,8 @@ class RequestParams():
 		self.docid = ''
 		self.fromDay=''
 		self.endDay = ''
-
-
+		self.internal = '1'
+		self.particle= 'day'
 
 	def setApi(self, api):
 		self.api =  api
@@ -62,6 +62,9 @@ class RequestParams():
 					'type':self.businessType,
 					'sub_type':self.subType,
 					'systerm':self.systemType,
-					'docid':self.docid}
+					'docid':self.docid,
+					'internal':self.internal,
+					'particle':self.particle
+					}
 		print 'url:'+self.requestUrl+'?'+urllib.urlencode(values) 
 		return self.requestUrl+'?'+urllib.urlencode(values) 

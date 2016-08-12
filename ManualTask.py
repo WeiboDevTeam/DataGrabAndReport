@@ -12,6 +12,8 @@ from ManagerUtils import WorkbookManager
 from ManagerUtils import InsertUtils
 from Request_Performance.Constants import Const
 from datetime import timedelta, date
+from Request_Performance import SLAQueryHelper
+import ConfigParser
 
 systems=['android',"iphone"]
 dayInterval = -8
@@ -20,12 +22,18 @@ endDay=(date.today() + timedelta(-1)).strftime('%Y%m%d')
 dirname = os.path.abspath(os.path.dirname(sys.argv[0]))
 path=dirname+'/output/'
 
+config_path=dirname+'/errorcode.config'
+
+errorcodes_config={}
+errorcodes_list=[]
+
 '''
 获取性能日志下所有子业务的类型
 '''
-def getAllSubBusinessType():
+def getAllSubBusinessType(system):
 	sub_business_type=[]
 	requestParam = PerformanceRequestParams.PerformanceRequestParams()
+	requestParam.setSystemType(system)
 	requestParam.setFromDay(fromDay)
 	requestParam.setEndDay(endDay)
 	requestParam.setApi('getSelectDataProvider.getWorkNames')
@@ -50,18 +58,22 @@ def getAllSubBusinessType():
 '''
 获取当前的微博版本，一般是最近的5个版本
 '''
-def getCurrentWeiboVersion():
+def getCurrentWeiboVersion(system):
+	list_versions=[]
 	requestParam = PerformanceRequestParams.PerformanceRequestParams()
+	requestParam.setSystemType(system)
 	requestParam.setFromDay(fromDay)
 	requestParam.setEndDay(endDay)
-	requestParam.setApi('weiboMobileClientPerformance.getCurrentVersion')
+	requestParam.setApi('WeiboMobileClientPerformance.getTopClientHits')
 	httprequest = HttpRequest.HttpRequest(requestParam.getCompleteUrl())
 	data = httprequest.request()
 	decodedData = json.loads(data)
 	code = decodedData['code']
 	if code == '2000':
-		version = decodedData['data']['versions']
-		return version.split(',')
+		versions = decodedData['data']['data']
+		for version in versions:
+			list_versions.append(version)
+		return list_versions
 	else:
 		print 'fetch current weibo version failed'
 
@@ -100,36 +112,85 @@ def getPerformanceSucRatioTrend(system,workbookmanager,targetVersion,file,type):
 	sucRatioHandler.system = system
 	sucRatioHandler.endday = endDay
 	sucRatioHandler.fromday = fromDay
-	sucRatioHandler.sub_business_type = getAllSubBusinessType()
+	sucRatioHandler.sub_business_type = getAllSubBusinessType(system)
 	sucRatioHandler.doRequest(workbookmanager,type)
 
 # grab data from sla and write to excel files with basic chart
-def startGrabWeeklyData(wbm):
-	version=getCurrentWeiboVersion()
+def startGrabWeeklyData(wbm,system):
+	version=getCurrentWeiboVersion(system)
 	version.sort()
-	targetVersion=version[len(version)-3:len(version)]
-	for system in systems:
-		fileName = system+'_'+endDay+Const.PATH_WEEKLY_DATA
-		getPerformanceAvgCostTime(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
-		getPerformanceSucRatioTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
-		# getPerformanceErroCodeTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
+	targetVersion=version[len(version)-1]['client_version']
+	print 'targetVersion:' + targetVersion
+	fileName = path+ system+'_'+endDay+Const.PATH_WEEKLY_DATA
+		# getPerformanceAvgCostTime(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
+	getPerformanceSucRatioTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_DATA)
+		# getPerformanceErroCodeTrend(system,wbm,targetVersion,fileName,Const.
 
-# grab data from sla and write the average result to excel files
-def startGrabWeeklyAvgData(wbm):
-	# # get recent 6 version data
-	version=getCurrentWeiboVersion()
-	version.sort()
-	targetVersion=version
-	for system in systems:
-		fileName = path+system+'_'+endDay+Const.PATH_WEEKLY_AVG_DATA
-		getPerformanceAvgCostTime(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_AVG_DATA)
-		getPerformanceSucRatioTrend(system,wbm,targetVersion,fileName,Const.TYPE_WEEKLY_AVG_DATA)
+def init_config():
+	config_read = ConfigParser.RawConfigParser()
+	config_read.read(config_path)
+	secs = config_read.sections()
+	print 'secs:' + str(secs)
+	for sec in secs:
+		errorcodes = config_read.options(sec)
+		for code in errorcodes:
+			errorcodes_config[code]=config_read.get(sec,code)
+	return errorcodes
+
+# 选取top3的错误码以及列出错误原因
+def parseErrorCode(codes,errorcodes_list):	
+	reasons=[]
+	if codes!= None:
+		if len(codes) >=3:					
+			codes=codes[0:3]
+		for i in range(0,len(codes)):
+			code=codes[i]
+			reason=code
+			if code in errorcodes_list:
+				if errorcodes_config.get(code) != None:
+					reason = str(errorcodes_config.get(code))+ '('+str(code)+')' 
+			reason_str='top'+str((i+1))+':'+ reason
+			reasons.append(reason_str)
+	return reasons
 
 def main():
+	errorcodes_list=init_config()
 	wbm=WorkbookManager.WorkbookManager()
-	sub_business_type=getAllSubBusinessType()
-	# startGrabWeeklyData(wbm)
-	# # startGrabWeeklyAvgData(wbm)
+	for system in systems:
+		# 获取版本,会有个默认值
+		version='680'
+		result=[]
+		query_1 = SLAQueryHelper.SLAQueryHelper('WeiboMobileClientPerformance.getTopClientHits',system,'','refresh_feed')
+		versions = query_1.doRequest(Const.QUERY_TYPE_VERSIONS)
+		if versions != None:
+			version = versions[0]
+			print 'version:'+str(version)
+		else:
+			'failed to get version list'		
+
+		# 获取业务列表
+		query_2 = SLAQueryHelper.SLAQueryHelper('getSelectDataProvider.getWorkNames',system,'','undefined')
+		subtypes = query_2.doRequest(Const.QUERY_TYPE_SUBTYPES)
+
+		if subtypes!= None:
+			for subtype in subtypes:
+				data=[]
+				# 获取成功率
+				ratio_query = SLAQueryHelper.SLAQueryHelper('weiboMobileClientPerformance.getEveryDaySucc',system,version,subtype)
+				ratio = ratio_query.doRequest(Const.QUERY_TYPE_SUCCESSRATIO)				
+				# 获取错误码
+				codes_query = SLAQueryHelper.SLAQueryHelper('weiboMobileClientPerformance.getTypeRatio',system,version,subtype)
+				codes = codes_query.doRequest(Const.QUERY_TYPE_ERRORCODE)
+				parse_codes = parseErrorCode(codes,errorcodes_list)
+
+				print 'success ratio of ' + subtype + ' is:' + str(ratio)
+				print 'error codes of ' + subtype + ' is:' + str(parse_codes))
+				data.append(subtype)
+				data.append(ratio)
+				data.append(parse_codes)
+
+				result.append(data)
+
 	wbm.closeWorkbooks() # must close workbook
 	print path
 

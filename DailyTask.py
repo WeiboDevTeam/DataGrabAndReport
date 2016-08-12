@@ -8,9 +8,11 @@ from ESQurey import EsQueryCrashSingleLog
 from ESQurey import EsQueryTop20CrashLog
 from ManagerUtils import WorkbookManager
 from ManagerUtils import WriteEmail
-from Request_Performance import RequestParams
+from Request_Performance import SLAQueryHelper
 from datetime import timedelta, date
 from AnalysizeDailyCrash import CalculateDailyCrash
+from Request_Performance import SLAQuery
+import ConfigParser
 
 top_number=10
 searchformat="%Y.%m.%d"
@@ -30,6 +32,7 @@ def doTask():
 	platforms = ['Android','iphone']
 	for platform in platforms:
 		tablelist=grabData(platform)
+		print 'platform:' + platform
 		sendMail(tablelist,platform)
 
 def sendMail(tablelist,platform):
@@ -53,19 +56,21 @@ def grabData(platform):
 	# 影响用户数统计
 	count=EsQueryCrashUidCount.EsQueryCrashUidCount(params)
 	crashUidCount=count.doRequest()
-	filepath2=count.getWorkbookPath()
-	tableinfo2={}
-	tableinfo2['filepath']=filepath2
-	tableinfo2['sheet']=0
-	tableinfo2['theme']=str(platform)+'影响用户数('+str(tdate)+')'
-	tableinfo2['title']=['序号','微博版本','影响用户数','crash次数']
-	tablelist.append(tableinfo2)
+	# filepath2=count.getWorkbookPath()
+	# tableinfo2={}
+	# tableinfo2['needsort']=True
+	# tableinfo2['filepath']=filepath2
+	# tableinfo2['sheet']=0
+	# tableinfo2['theme']=str(platform)+'影响用户数('+str(tdate)+')'
+	# tableinfo2['title']=['序号','微博版本','影响用户数','crash次数']
+	# tablelist.append(tableinfo2)
 
 	# 抓取Top10的crash
 	top_crash=EsQueryTop20CrashLog.EsQueryTop20CrashLog(params)
 	topCrashList=top_crash.doRequest()
 	filepath3=top_crash.getWorkbookPath()
 	tableinfo3={}
+	tableinfo3['needsort']=True
 	tableinfo3['filepath']=filepath3
 	tableinfo3['sheet']=0
 	tableinfo3['theme']=str(platform)+'端Top'+str(top_number)+'的crash('+str(tdate)+')'
@@ -80,11 +85,28 @@ def grabData(platform):
 	test.doRequest()
 	filepath=test.getWorkbookPath()
 	tableinfo={}
+	tableinfo['needsort']=True
 	tableinfo['filepath']=filepath
 	tableinfo['sheet']=0
 	tableinfo['theme']=str(platform)+'影响用户深度Top'+str(top_number)+'的crash('+str(tdate)+')  单个用户单个crash的影响次数/天'
 	tableinfo['title']=['序号','uid','crash内容','crash次数']
 	tablelist.append(tableinfo)
+
+	# 业务错误率统计
+	if platform=='Android':
+		platform='android'
+	slaquery = SLAQuery.SLAQuery()
+	version= slaquery.doQuery(platform)
+	filepath4=slaquery.getPath(platform)
+	print 'filepath4:' + filepath4
+	tableinfo4={}
+	tableinfo4['needsort']=False
+	tableinfo4['filepath']=filepath4
+	tableinfo4['sheet']=0
+	tableinfo4['theme']=str(platform)+'端各业务错误率统计（'+str(version)+'）'
+	tableinfo4['title']=['序号','业务名','错误率','错误原因']
+	tablelist.append(tableinfo4)
+	print tablelist
 
 	return tablelist
 
@@ -110,6 +132,7 @@ def calculateCrashRatio(crashUidCount,topCrashList):
 			resultItem['component'] = 'None'
 			resultList.append(resultItem)
 		return resultList
+
 
 def main():
 	doTask()

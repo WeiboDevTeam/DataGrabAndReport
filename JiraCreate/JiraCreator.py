@@ -31,7 +31,7 @@ class JiraCreator(object):
 
 	def init_jira_config(self):
 		config_read = ConfigParser.RawConfigParser()
-		config_read.read('./account.config')
+		config_read.read('/Users/xiaofei9/DataGrabAndReport/account.config')
 		secs = config_read.sections()
 		print secs
 		for sec in secs:

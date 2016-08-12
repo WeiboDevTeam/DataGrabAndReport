@@ -9,8 +9,8 @@ class PerformanceSucRatioHandler(PerformanceAvgCostTimeHandler.PerformanceAvgCos
 
 	def __init__(self,filename):
 		super(PerformanceSucRatioHandler, self).__init__(filename)
-		self.api = "weiboMobileClientPerformance.getSuccRatio"
-		self.docid = "versionSuccRatioContaine"
+		self.api = "weiboMobileClientPerformance.getEveryDaySucc"
+		self.docid = "everyDaySuccContainer"
 		self.sheetname='SucRatio'
 
 	def requestStart(self, sub_type):

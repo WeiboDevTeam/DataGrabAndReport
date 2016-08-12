@@ -18,7 +18,7 @@ class WriteEmail(object):
 
 	def init_config(self):
 		config_read = ConfigParser.RawConfigParser()
-		config_read.read('./account.config')
+		config_read.read('/Users/xiaofei9/DataGrabAndReport/account.config')
 		secs = config_read.sections()
 		for sec in secs:
 			if sec == u'mail_config':
@@ -50,7 +50,7 @@ class WriteEmail(object):
 			for i in range(0,len(table_title)):
 				title=title+'<th>'+table_title[i]+'</th>'
 			# 表格里的数据
-			data=self.buildTableContent(table.get('filepath'),table.get('sheet'),num)
+			data=self.buildTableContent(table.get('filepath'),table.get('sheet'),num,table.get('needsort'))
 			content=content+header+table_tag+self.getTableTitle(title)+data+'</table>'
 			count=count+1
 		return content
@@ -62,18 +62,18 @@ class WriteEmail(object):
 		tr_end='</tr>'
 		return tr_start+title+tr_end
 
-	# 不排序直接构建表格内容
-	def readData(self,filepath):
-		print filepath
+	# 读取文件里的数据，并提取前num个数据构建邮件内容
+	def buildTableContent(self,filepath,sheet,num,needsort):
+		data=self.readData(filepath,sheet,needsort)
 		content=''
-		book=xlrd.open_workbook(filepath)
-		sheet=book.sheet_by_index(0)
-		nrows=sheet.nrows
-		ncols=sheet.ncols
-		for i in range(0,nrows):
+		if(len(data)>num):
+			number=num
+		else:
+			number=len(data)
+		for i in range(0,number):
 			td='<td>'+str(i+1)+'</td>'
-			for j in range(ncols):
-				cellData=sheet.cell_value(i,j)				
+			for j in range(len(data[i])):
+				cellData=data[i][j]
 				try:
 					tip='<td>'+cellData+'</td>'
 				except:
@@ -85,30 +85,8 @@ class WriteEmail(object):
 			content=content+tr
 		return content
 
-	# 根据排序后的内容选取Top20的数据构建表格内容
-	def buildTableContent(self,filepath,sheet,num):
-		data=self.readAndSortData(filepath,sheet)
-		content=''
-		if(len(data)>num):
-			number=num
-		else:
-			number=len(data)
-		for i in range(0,number):
-			td='<td>'+str(i+1)+'</td>'
-			for j in range(len(data[i])):
-				cellData=data[i][j]
-				if isinstance(cellData,int):
-					tip='<td>'+str(cellData)+'</td>'
-				else:
-					tip='<td>'+cellData+'</td>'
-				td=td+tip
-			tr='<tr>'+td+'</tr>'
-			tr=tr.encode('utf-8')
-			content=content+tr
-		return content
-
-	# 读取excel并对内容进行排序，通常根据表格的最后一列排序
-	def readAndSortData(self,filepath,sheet):
+	# 读取excel并对内容，并根据需要进行排序，通常根据表格的最后一列排序
+	def readData(self,filepath,sheet,needsort):
 		book=xlrd.open_workbook(filepath)
 		table=book.sheet_by_index(sheet)
 		data=[]
@@ -123,7 +101,8 @@ class WriteEmail(object):
 				else:
 					row.append(table.cell(i,j).value)
 			data.append(row)
-		data=sorted(data,key=lambda x:x[ncols-1],reverse=True)
+		if needsort==True:
+			data=sorted(data,key=lambda x:x[ncols-1],reverse=True)
 		return data
 
 	# 发送邮件
