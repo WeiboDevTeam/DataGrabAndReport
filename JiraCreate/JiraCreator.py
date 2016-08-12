@@ -6,6 +6,7 @@ import time
 import random
 import urllib
 import ConfigParser
+import re
 
 __metaclass__=type
 class JiraCreator(object):
@@ -110,7 +111,7 @@ class JiraCreator(object):
 			return None
 		if isinstance(terms, (list, tuple)):
 			terms = ' '.join(terms)
-		issues = self.session.jira1.getIssuesFromTextSearchWithProject(self.auth, [project_key], terms, 5)
+		issues = self.session.jira1.getIssuesFromTextSearchWithProject(self.auth, [project_key], terms, 3)
 		if(issues != None and (len(issues) >	 0)):
 			return issues
 		return None
@@ -152,11 +153,14 @@ class JiraCreator(object):
 			return summary
 
 	def createJiraDesc(self,crashLog):
-		es_query = JiraCreator.ES_CRASH_QUERY_STRING % (crashLog.get('reason'), crashLog.get('fingerprint'),crashLog.get('fromvalue'))
+		#将单引号替换成'!\''
+		print "createJiraDesc"
+		replacedReson = re.sub('\'','!\'',crashLog.get('reason'))
+		es_query = JiraCreator.ES_CRASH_QUERY_STRING % (replacedReson, crashLog.get('fingerprint'),crashLog.get('fromvalue'))
 		es_query_body = {'_g':'(time:(from:now-12h,to:now))','_a':es_query}
 		es_query_url = JiraCreator.ES_CRASH_URL+urllib.urlencode(es_query_body)
-		desc="log fingerprint: "+crashLog.get('fingerprint')+ \
-		"\nsearch in kibana :"+ es_query_url + \
+		desc = "log fingerprint: "+crashLog.get('jira_query_key')
+		desc = desc + "\nsearch in kibana :"+ es_query_url + \
 		"\nin version:"+crashLog.get('fromvalue')+"\n"+crashLog.get('jsonlog')
 
 		if(crashLog.get('uid') != None):

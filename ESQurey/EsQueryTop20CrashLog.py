@@ -80,7 +80,7 @@ class EsQueryTop20CrashLog(EsQueryJob):
 				else:
 					crashItem = self.__queryCrashLogByFingerPrinter(fromvalue, content)
 					if(crashItem == None):
-						econtinue
+						continue
 					jsonlog = crashItem.get('jsonlog')
 					reason = crashItem.get('crash_reason')
 					self.updateMatchedList(data_list,'uid',jsonlog,content,reason,item.get('doc_count'))

@@ -20,10 +20,12 @@ def __handleAfterCal(resultDict):
 				# print ratioData
 				dateList = sorted(ratioDict.get(key).keys())
 				sortedDict = collections.OrderedDict()
+				value = ratioDict.get(key)
+				# if(key==u'基础架构'):
+				# 	print key,value,ratioData
 				for dateKey in dateList:
 					#同一天的数据相加，但是总数不相加
 					data = []
-					value = ratioDict.get(key)
 					tmpData = value.get(dateKey)
 					crashUidNumData = ratioData.get(dateKey)
 					if(crashUidNumData != None and crashUidNumData != u'None'):
@@ -41,15 +43,20 @@ def __handleAfterCal(resultDict):
 						data.append(crashUidNumData[1])
 					elif(tmpData != None and tmpData != u'None'):
 						data.append(tmpData[1])
-					
 					sortedDict[dateKey]=tuple(data)
+				if(key==u'基础架构'):
+					print sortedDict
+				ratioDict[key]=sortedDict
 			else:
 				sortedDict = collections.OrderedDict()
 				sortedDate = sorted(ratioData.keys())
 				for keyDate in sortedDate:
-					sortedDict[keyDate] = ratioData[keyDate]
+					tmp = ratioData[keyDate]
+					if(tmp == None or tmp == u'None'):
+						sortedDict[keyDate] = (u'0',u'0',u'0')
+					else:
+						sortedDict[keyDate] = tmp
 				ratioDict[key]=sortedDict
-			print ratioDict[key]
 		return ratioDict
 	else:
 		return None
@@ -74,6 +81,7 @@ def __writeRatioData(data,worksheet,rowStart,columnStart):
 	worksheet.write_column(startRow,startColumn,keys)   #第3行第一列
 	for key in keys:
 		values = data.get(key).values()
+		print values
 		for value in values:
 			startColumn += 1
 			format = workbook.add_format()
@@ -83,8 +91,11 @@ def __writeRatioData(data,worksheet,rowStart,columnStart):
 				continue
 			count = int(value[0])
 			totalCount = int(value[1])
-			formula = '=%d/(%d+(0.0))' % (count,totalCount)
-			worksheet.write_formula(startRow,startColumn,formula,format)
+			if(count != 0 and totalCount != 0):
+				formula = '=%d/(%d+(0.0))' % (count,totalCount)
+				worksheet.write_formula(startRow,startColumn,formula,format)
+			else:
+				worksheet.write(startRow,startColumn,0,format)
 		startColumn = 0
 		startRow += 1
 	return (rows,columns)
@@ -141,14 +152,13 @@ for platform in platforms:
 				chartPositionIndexY = 0
 				for i in range(0,tableRows):
 
-					if(i%3==0):
+					if(i%2==0):
 						chartNum += 1
 						chart = workbook.add_chart({'type':'line'})
 						chart.add_series({'name':[worksheet.get_name(),startRow+i,0],
 											'values':[worksheet.get_name(),startRow+i,1,startRow+i,tableColumns],
 											'categories':[worksheet.get_name(),categoryRow,1,categoryRow,tableColumns],
-											'marker': {'type': 'automatic'},
-											'data_labels': {'value': True,'position': 'above'}})
+											'marker': {'type': 'automatic'}})
 						chart.set_x_axis({'label_position': 'high','name': 'Date'})
 						chart.set_y_axis({'name': 'Crash Percentage'})
 						chart.set_size({'x_scale':1.2,'y_scale':1.2})
@@ -161,8 +171,7 @@ for platform in platforms:
 					else:
 						chart.add_series({'values':[worksheet.get_name(),startRow+i,1,startRow+i,tableColumns],
 							'name':[worksheet.get_name(),startRow+i,0],
-							'marker': {'type': 'automatic'},
-							'data_labels': {'value': True},'position': 'below'})
+							'marker': {'type': 'automatic'}})
 
 
 				worksheet1 = workbook.add_worksheet('crash_info')

@@ -78,18 +78,20 @@ class CalculateDailyCrash(object):
 			if(jira_assignee != None and jira_assignee != u'None'):
 				itemForUpdate['jira_assignee'] = jira_assignee
 
-	# def __queryCrashComponent(self,resultList):
-	# 	if(resultList == None):
-	# 		pass
-	# 	jiraCreator = JiraCreator.JiraCreator()
-	# 	jiraCreator.login()
-	# 	for crashItem in resultList.values():
-	# 		issueid=crashItem.get('jira_id')
-	# 		if(issueid != None and issueid != u'None'):
-	# 			issue = jiraCreator.queryIssueById(issueid)
-	# 			components = issue.get('components')
-	# 			if(len(components)>0):
-	# 				crashItem['component']=components[0].get('name')
+	def __updateCrashJirAssign(self,resultList):
+		if(resultList == None):
+			pass
+		jiraCreator = JiraCreator.JiraCreator()
+		jiraCreator.login()
+		for crashItem in resultList.values():
+			issueid=crashItem.get('jira_id')
+			if(issueid != None and issueid != u'None'):
+				issue = jiraCreator.queryIssueById(issueid)
+				jiraAssignee = issue.get('assignee')
+				if(jiraAssignee == crashItem.get('jira_assignee')):
+					pass
+				else:
+					crashItem['jira_assignee'] = jiraAssignee
 
 	def __queryCrashComponent(self,resultList):
 		if(resultList == None or self.client_staffs == None):
@@ -109,6 +111,7 @@ class CalculateDailyCrash(object):
 	def calculate(self):
 		topMaxCrashCollection={}
 		dataCollection={}
+		dateList=[]
 		for fileName in os.listdir(self.dir):
 			filePath = os.path.join(self.dir,fileName)
    			if os.path.isfile(filePath):
@@ -117,6 +120,7 @@ class CalculateDailyCrash(object):
    				index = fileName.index('.')
    				fileName = fileName[0:index]
 				data = self.__readDataFromFile(filePath)
+				dateList.append(fileName)
 				data.sort(key=lambda k: (k.get('crash_ratio', 0)))
 				topMaxList=[]
 				for i in range(0,max_top_crash):
@@ -162,8 +166,10 @@ class CalculateDailyCrash(object):
 					dataCollection[fingerprint]=collectionInfo
 				for keyitem in topMaxCrashCollection.keys():
 					data = topMaxCrashCollection.get(keyitem).get('data')
-					if(data.has_key(fileName) == False):
-						data[fileName]=None
+					for date in dateList:
+						if(data.has_key(date) == False):
+							data[date]=None
+		self.__updateCrashJirAssign(topMaxCrashCollection)
 		self.__queryCrashComponent(topMaxCrashCollection)
 		return topMaxCrashCollection
 
