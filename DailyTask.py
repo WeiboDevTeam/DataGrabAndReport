@@ -29,7 +29,7 @@ def test():
 
 def doTask():
 	print "do timer task"
-	platforms = ['android','iphone']
+	platforms = ['Android','iphone']
 	for platform in platforms:
 		tablelist=grabData(platform)
 		print 'platform:' + platform
@@ -54,8 +54,8 @@ def grabData(platform):
 	#test.doRequest()
 
 	# 影响用户数统计
-	# count=EsQueryCrashUidCount.EsQueryCrashUidCount(params)
-	# crashUidCount=count.doRequest()
+	count=EsQueryCrashUidCount.EsQueryCrashUidCount(params)
+	crashUidCount=count.doRequest()
 	# filepath2=count.getWorkbookPath()
 	# tableinfo2={}
 	# tableinfo2['needsort']=True
@@ -93,6 +93,8 @@ def grabData(platform):
 	tablelist.append(tableinfo)
 
 	# 业务错误率统计
+	if platform=='Android':
+		platform='android'
 	slaquery = SLAQuery.SLAQuery()
 	version= slaquery.doQuery(platform)
 	filepath4=slaquery.getPath(platform)
