@@ -1,3 +1,5 @@
+#!/usr/bin /python
+# -*- coding: utf-8 -*-
 from Request_Performance import PerformanceRequestParams
 from Request_Performance import HttpRequest
 from urllib2 import URLError
@@ -11,7 +13,7 @@ class PerformanceAvgCostTimeHandler(object):
 		super(PerformanceAvgCostTimeHandler, self).__init__()
 		self.api = "weiboMobileClientPerformance.getAvgCostTime"
 		self.docid="versionCostTimeContainer"
-		self.version=[]
+		self.version=''
 		self.sub_business_type=[]
 		self.system=''
 		self.fromday=''
@@ -47,7 +49,7 @@ class PerformanceAvgCostTimeHandler(object):
 					requestParam.setFromDay(self.fromday)
 					requestParam.setEndDay(self.endday)
 					requestParam.setSubType(sub_type_value)
-					requestParam.setWeiboVersion(self.version)
+					requestParam.setWeiboVersion(self.version)					
 					url = requestParam.getCompleteUrl()
 					httpRequest = HttpRequest.HttpRequest(url)
 					data = httpRequest.request();
@@ -114,27 +116,30 @@ class PerformanceAvgCostTimeHandler(object):
 		code = decodedData['code']
 		if code == '2000':
 			lineData = decodedData['data']['lineData']
+			print 'lineData:'
+			print lineData
 			for element in lineData:
-				versionList.append(element['name'])
+				print 'element:'
+				print element
+				# versionList.append(element['name'])
 				dataList.append(element['data'])
 			dateArr = decodedData['data']['dateArr']
 			result['date']=dateArr
-			result['version']=versionList
+			# result['version']=versionList
 			result['data']=dataList
 		else:
 			print 'request sub_type error'
+		print result
 		return result
 
-	# 根据业务名插入sheet页
+	# 根据业务名插入sheet
 	def __inserAvgToExcel(self,workbook,worksheet,parsedData,count,subtype):
-		insert_instance=InsertUtils()
-		insert_instance.write_avg_data(workbook,worksheet,self.sheetname,parsedData,count,subtype)
-		# insert_instance.plotAvg(workbook,worksheet,self.sheetname,count,len(self.sub_business_type),len(parsedData.get('version')),subtype)		
+		insert_instance=InsertUtils.InsertUtils()
+		insert_instance.write_avg_data(workbook,worksheet,self.sheetname,parsedData,count,subtype)	
 		return True
 
 	# insert data sheet by subtype
 	def __inserToExcel(self,workbook,worksheet,parsedData,count,subtype):
-		insert_instance=InsertUtils()
+		insert_instance=InsertUtils.InsertUtils()
 		insert_instance.write_data(workbook,worksheet,subtype,parsedData,count,self.sheetname)
-		insert_instance.plot(workbook,worksheet,subtype,count,len(parsedData.get('version')),len(parsedData.get('date')),self.sheetname)
 		return True

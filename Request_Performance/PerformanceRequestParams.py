@@ -5,11 +5,11 @@ __metaclass__=type
 class PerformanceRequestParams(RequestParams.RequestParams):
 	def __init__(self, url='http://sla.weibo.cn/php/start.php'):
 		super(PerformanceRequestParams,self).__init__(url)
-		self.businessType = 'ClientPerformance'
+		self.businessType = 'ClientPerformance_new'
 		self.country = ''
 		self.province=''
 		self.city=''
-		self.weibo_version=[]
+		self.weibo_version=''
 		self.systerm_version=[]
 		self.netType = []
 		self.mobile_type=[]
@@ -61,7 +61,7 @@ class PerformanceRequestParams(RequestParams.RequestParams):
 		values = {'country':self.country,
 					'province':self.province,
 					'city':self.getDefaultCityParam(),
-					'version':self.getParamOfList(self.weibo_version),
+					'client_version':self.getParamOfList(self.weibo_version),
 					'systerm_version':self.getParamOfList(self.systerm_version),
 					'netType':self.getParamOfList(self.netType),
 					'mobile_type':self.getParamOfList(self.mobile_type)}
