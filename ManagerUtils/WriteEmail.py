@@ -71,7 +71,7 @@ class WriteEmail(object):
 			else:
 				td_jira_id='<td>None</td>'		
 			td=td_num+td_counts+td_reason+td_jira_status+td_jira_assignee+td_jira_id
-			if counts>10000:
+			if counts>10000 and jira_status !='resolved':
 				tr='<tr style="color:red;">'+td+'</tr>'
 			else:
 				tr='<tr>'+td+'</tr>'
