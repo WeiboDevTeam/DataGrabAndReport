@@ -1,5 +1,5 @@
 #encoding:utf-8
-from Request_Performance.Constants import Const
+from Constants import Const
 from datetime import timedelta, date
 import urllib
 __metaclass__ = type

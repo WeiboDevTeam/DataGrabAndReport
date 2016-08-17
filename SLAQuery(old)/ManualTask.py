@@ -3,16 +3,16 @@
 
 import json
 import os,sys
-from Request_Performance import PerformanceAvgCostTimeHandler
-from Request_Performance import PerformanceErrorCodeHandler
-from Request_Performance import PerformanceSucRatioHandler
-from Request_Performance import PerformanceRequestParams
-from Request_Performance import HttpRequest
+import PerformanceAvgCostTimeHandler
+import PerformanceErrorCodeHandler
+import PerformanceSucRatioHandler
+import PerformanceRequestParams
+from SLAQuery import HttpRequest
 from ManagerUtils import WorkbookManager
 from ManagerUtils import InsertUtils
-from Request_Performance.Constants import Const
+from SLAQuery.Constants import Const
 from datetime import timedelta, date
-from Request_Performance import SLAQueryHelper
+from SLAQuery import SLAQueryHelper
 import ConfigParser
 
 systems=['android',"iphone"]
@@ -154,43 +154,8 @@ def parseErrorCode(codes,errorcodes_list):
 	return reasons
 
 def main():
-	errorcodes_list=init_config()
 	wbm=WorkbookManager.WorkbookManager()
-	for system in systems:
-		# 获取版本,会有个默认值
-		version='680'
-		result=[]
-		query_1 = SLAQueryHelper.SLAQueryHelper('WeiboMobileClientPerformance.getTopClientHits',system,'','refresh_feed')
-		versions = query_1.doRequest(Const.QUERY_TYPE_VERSIONS)
-		if versions != None:
-			version = versions[0]
-			print 'version:'+str(version)
-		else:
-			'failed to get version list'		
-
-		# 获取业务列表
-		query_2 = SLAQueryHelper.SLAQueryHelper('getSelectDataProvider.getWorkNames',system,'','undefined')
-		subtypes = query_2.doRequest(Const.QUERY_TYPE_SUBTYPES)
-
-		if subtypes!= None:
-			for subtype in subtypes:
-				data=[]
-				# 获取成功率
-				ratio_query = SLAQueryHelper.SLAQueryHelper('weiboMobileClientPerformance.getEveryDaySucc',system,version,subtype)
-				ratio = ratio_query.doRequest(Const.QUERY_TYPE_SUCCESSRATIO)				
-				# 获取错误码
-				codes_query = SLAQueryHelper.SLAQueryHelper('weiboMobileClientPerformance.getTypeRatio',system,version,subtype)
-				codes = codes_query.doRequest(Const.QUERY_TYPE_ERRORCODE)
-				parse_codes = parseErrorCode(codes,errorcodes_list)
-
-				print 'success ratio of ' + subtype + ' is:' + str(ratio)
-				print 'error codes of ' + subtype + ' is:' + str(parse_codes))
-				data.append(subtype)
-				data.append(ratio)
-				data.append(parse_codes)
-
-				result.append(data)
-
+	for system in systems:	
 	wbm.closeWorkbooks() # must close workbook
 	print path
 

@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from Request_Performance import HttpRequest
-from Request_Performance import QueryParams
-from Request_Performance.Constants import Const
+import HttpRequest
+import QueryParams
+from Constants import Const
 from urllib2 import URLError
 import json
 

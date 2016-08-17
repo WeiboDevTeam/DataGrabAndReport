@@ -4,6 +4,7 @@ import csv
 from CSVFileUtils import UnicodeReader
 from CSVFileUtils import UnicodeWriter
 from JiraCreate import JiraCreator
+from ManagerUtils import Utils
 import ConfigParser
 import codecs
 
@@ -45,7 +46,7 @@ class CalculateDailyCrash(object):
 
 	def __readClientStaffsInfo(self):
 		config_read = ConfigParser.RawConfigParser()
-		config_read.readfp(codecs.open('wb_client_staff.data', "r", "utf-8-sig"))  
+		config_read.readfp(codecs.open(Utils.getConfigFolder()+'wb_client_staff.data', "r", "utf-8-sig"))  
 		options = config_read.options('wb_client_staff')
 		if(options != None):
 			result = {}

@@ -1,69 +1,127 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import xlrd,os,sys,time,smtplib,email
-from email import encoders
-from email.mime.text import MIMEText
-from email.header import Header
-from email.utils import COMMASPACE
-import base64
-import ConfigParser
+import xlrd
+from ManagerUtils import Utils
 
 class WriteEmail(object):
 
 	def __init__(self):
 		super(WriteEmail, self).__init__()
-		self.init_config()
-		
-
-	def init_config(self):
-		config_read = ConfigParser.RawConfigParser()
-		config_read.read('/Users/xiaofei9/DataGrabAndReport/account.config')
-		secs = config_read.sections()
-		for sec in secs:
-			if sec == u'mail_config':
-				options = config_read.options(sec)
-				self.email_config = {}
-				for key in options:
-					self.email_config[key]=config_read.get(sec,key)
 
 	# 编辑邮件正文
-	def getMailContent(self,tablelist,num):
+	def writeEmail(self,tablelist,size):
 		header='<!DOCTYPE html><html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/></head>'
 		body='<body>'
-		content=self.buildMailContent(tablelist,num)
+		content=self._buildMailContent(tablelist,size)
 		tail='</body></html>'
 		mail=header+body+content+tail
 		return mail
 
 	# 构建邮件正文内容
-	def buildMailContent(self,tablelist,num):
-		count=1
+	def _buildMailContent(self,tablelist,size):
 		content=''
-		for table in tablelist:
-			# 表格外的标题
-			header='<h4>'+str(count)+'.'+table.get('theme')+'</h4>'
-			table_tag='<table border="1" cellspacing="0" cellpadding="3">'
-			# 表格里的标题
-			title=''						
-			table_title=table.get('title')
-			for i in range(0,len(table_title)):
-				title=title+'<th>'+table_title[i]+'</th>'
-			# 表格里的数据
-			data=self.buildTableContent(table.get('filepath'),table.get('sheet'),num,table.get('needsort'))
-			content=content+header+table_tag+self.getTableTitle(title)+data+'</table>'
-			count=count+1
+		for i in range(0,len(tablelist)):
+			table=tablelist[i]
+			print 'key='+table.get('key')
+			if table.get('key')=='crash':
+				data=self._buildDailyCrashInfo(i,size,table)
+			elif table.get('key')=='slaquery':
+				data=self._buildSLAQueryInfo(i,size,table)
+			content=content+data
 		return content
 
+	def _buildDailyCrashInfo(self,index,limit_size,dict_data):
+		content=''
+		table=''
+		title=''
+		# 表格外的标题
+		header='<h4>'+str(index+1)+'.'+'Crash情况汇总（Top'+str(limit_size)+'）'+'</h4>'
+		table_tag='<table border="1" cellspacing="0" cellpadding="3">'
+		# 表格里的标题						
+		table_title=['序号','crash次数','crash原因','jira状态','jira分配人','jira地址']
+		for i in range(0,len(table_title)):
+			title=title+'<th>'+table_title[i]+'</th>'
+		# 表格里的数据
+		data_list=dict_data.get('data')
+		if(len(data_list)>limit_size):
+			size=limit_size
+		else:
+			size=len(data_list)
+		for i in range(0,size):
+			td_num='<td>'+str(i+1)+'</td>'
+			data=data_list[i]
+			counts=data.get('counts')
+			td_counts='<td>'+str(counts)+'</td>'
+			td_reason='<td>'+data.get('reason')+'</td>'
+			jira_status=data.get('jira_status')
+			if jira_status!=None:				
+				td_jira_status='<td>'+jira_status+'</td>'
+			else:
+				td_jira_status='<td>None</td>'
+			jira_assignee=data.get('jira_assignee')
+			if jira_assignee!=None:				
+				td_jira_assignee='<td>'+jira_assignee+'</td>'
+			else:
+				td_jira_assignee='<td>None</td>' 
+			jira_id=data.get('jira_id')
+			if jira_id!=None:
+				jira_link=Utils.generateJiraLink(jira_id)
+				td_jira_id='<td><a href='+jira_link+'>'+jira_id+'</a></td>'
+			else:
+				td_jira_id='<td>None</td>'		
+			td=td_num+td_counts+td_reason+td_jira_status+td_jira_assignee+td_jira_id
+			if counts>10000:
+				tr='<tr style="color:red;">'+td+'</tr>'
+			else:
+				tr='<tr>'+td+'</tr>'
+			tr=tr.encode('utf-8')
+			table=table+tr
+		content=header+table_tag+self._getTableTitle(title)+table+'</table>'
+		return content
+
+	def _buildSLAQueryInfo(self,index,limit_size,dict_data):
+		content=''
+		table=''
+		title=''
+		# 表格外的标题
+		header='<h4>'+str(index+1)+'.'+'各业务错误情况（Top'+str(limit_size)+'）'+'</h4>'
+		table_tag='<table border="1" cellspacing="0" cellpadding="3">'
+		# 表格里的标题						
+		table_title=['序号','业务名','错误率','错误原因']
+		for i in range(0,len(table_title)):
+			title=title+'<th>'+table_title[i]+'</th>'
+		# 表格里的数据
+		data_list=dict_data.get('data')
+		if(len(data_list)>limit_size):
+			size=limit_size
+		else:
+			size=len(data_list)
+		for i in range(0,size):
+			td_num='<td>'+str(i+1)+'</td>'
+			data=data_list[i]			
+			td_subtype='<td>'+data.get('subtype')+'</td>'
+			ratio=data.get('ratio')
+			td_ratio='<td>'+str(ratio)+'</td>'
+			td_reason='<td>'+data.get('errorcodes')+'</td>'				
+			td=td_num+td_subtype+td_ratio+td_reason
+			if ratio>10:
+				tr='<tr style="color:red;">'+td+'</tr>'
+			else:
+				tr='<tr>'+td+'</tr>'
+			tr=tr.encode('utf-8')
+			table=table+tr
+		content=header+table_tag+self._getTableTitle(title)+table+'</table>'
+		return content
 		
 	# 获取表格标题
-	def getTableTitle(self,title):
+	def _getTableTitle(self,title):
 		tr_start='<tr bgcolor="#F79646" align="left" >'
 		tr_end='</tr>'
 		return tr_start+title+tr_end
 
 	# 读取文件里的数据，并提取前num个数据构建邮件内容
-	def buildTableContent(self,filepath,sheet,num,needsort):
+	def _buildTableContent(self,filepath,sheet,num,needsort):
 		data=self.readData(filepath,sheet,needsort)
 		content=''
 		if(len(data)>num):
@@ -86,7 +144,7 @@ class WriteEmail(object):
 		return content
 
 	# 读取excel并对内容，并根据需要进行排序，通常根据表格的最后一列排序
-	def readData(self,filepath,sheet,needsort):
+	def _readData(self,filepath,sheet,needsort):
 		book=xlrd.open_workbook(filepath)
 		table=book.sheet_by_index(sheet)
 		data=[]
@@ -104,56 +162,3 @@ class WriteEmail(object):
 		if needsort==True:
 			data=sorted(data,key=lambda x:x[ncols-1],reverse=True)
 		return data
-
-	# 发送邮件
-	def mailSend(self,mail,platform):
-		# 设置发件人
-		sender = self.email_config.get('mail_sender')
-		if sender == None:
-			print 'mail_sender is null'
-			return
-
-		# 设置接收人
-		if(platform == u'Android'):
-			receiver = self.email_config.get('mail_android_receiver').split(',')
-			# receiver = [testReceiver]
-		else:
-			receiver = self.email_config.get('mail_ios_receiver').split(',')
-			# receiver = ['guizhong@staff.weibo.com']
-		if receiver == None:
-			print 'mail_receiver is null'
-			return
-
-		# 设置邮件主题
-		subject=platform+'每日crash反馈'
-		#设置发件服务器，即smtp服务器
-		smtpserver=self.email_config.get('mail_smtpserver')
-		# 配置端口
-		smtpport=self.email_config.get('mail_smtpport')
-		if(smtpserver == None or smtpport == None):
-			print 'smtpserver or smtpport is null'
-			return
-
-		#设置登陆名称
-		username=self.email_config.get('mail_username')
-		#设置登陆密码
-		password=self.email_config.get('mail_pwd')
-		if(username == None or password == None):
-			print 'username or password is null'
-			return
-
-		#实例化写邮件到正文区，邮件正文区需要以HTML文档形式写入
-		msg= MIMEText(mail,'html','utf-8')
-		#输入主题
-		msg['Subject']= subject
-		msg['From']= username
-		msg['To']= COMMASPACE.join(receiver)
-		#调用邮件发送方法，需配合导入邮件相关模块
-		smtp = smtplib.SMTP(smtpserver,smtpport)
-		#输入用户名，密码，登陆服务器
-		print smtp.login(username, password)
-		#
-		#发送邮件
-		smtp.sendmail(sender, receiver, msg.as_string())
-		#退出登陆并关闭与发件服务器的连接
-		smtp.quit()

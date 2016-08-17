@@ -7,6 +7,7 @@ import random
 import urllib
 import ConfigParser
 import re
+from ManagerUtils import Utils
 
 __metaclass__=type
 class JiraCreator(object):
@@ -31,7 +32,7 @@ class JiraCreator(object):
 
 	def init_jira_config(self):
 		config_read = ConfigParser.RawConfigParser()
-		config_read.read('/Users/xiaofei9/DataGrabAndReport/account.config')
+		config_read.read(Utils.getConfigFolder()+'account.config')
 		secs = config_read.sections()
 		print secs
 		for sec in secs:

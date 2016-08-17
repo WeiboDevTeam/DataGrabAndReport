@@ -2,36 +2,23 @@
 # -*- coding: utf-8 -*-
 from ManagerUtils import WorkbookManager
 from ManagerUtils import InsertUtils
-from Request_Performance.Constants import Const
+from ManagerUtils import Utils
+from Constants import Const
 from datetime import timedelta, date
-from Request_Performance import SLAQueryHelper
-import os,sys,ConfigParser
-reload(sys)
-sys.setdefaultencoding('utf8')
+import SLAQueryHelper
+import ConfigParser
 
 __metaclass__=type
 
 class SLAQuery():
 	def __init__(self):
-		self.dirname=os.path.abspath(os.path.dirname(sys.argv[0]))
 		self.errorcodes_config={}
 		self.errorcodes=[]
 		self.subtypes_config={}
 		self.subtypes=[]
 		self.date= (date.today() - timedelta(1)).strftime('%Y%m%d')
-		self.config_path=self.dirname+'/errorcode.config'
+		self.config_path=Utils.getConfigFolder()+'/errorcode.config'
 		self.workbookname='result.xlsx'
-
-	'''
-	获取输出文件夹的路径
-	'''
-	def getOutputPath(self,platform):
-		dirname = os.path.abspath(os.path.dirname(sys.argv[0]))
-		path=dirname+'/output/'+self.date +'/'+platform+'/'
-		if os.path.isdir(path)==False:
-			print 'create dir:' + path
-			os.makedirs(path)
-		return path
 
 	def _init_config(self):
 		config_read = ConfigParser.RawConfigParser()
@@ -72,12 +59,11 @@ class SLAQuery():
 		return sub_type
 
 	def _startQuery(self,system):
-		result_data={}
+		result_data=[]
 		# 初始化错误码列表
 		self._init_config()
 		# 获取版本,会有个默认值
 		version='680'
-		result=[]
 		query_1 = SLAQueryHelper.SLAQueryHelper('WeiboMobileClientPerformance.getTopClientHits',system,'','refresh_feed')
 		versions = query_1.doRequest(Const.QUERY_TYPE_VERSIONS)
 		if versions != None:
@@ -85,7 +71,6 @@ class SLAQuery():
 			print 'version:'+str(version)
 		else:
 			'failed to get version list'		
-		result_data['version']=version
 
 		# 获取业务列表
 		query_2 = SLAQueryHelper.SLAQueryHelper('getSelectDataProvider.getWorkNames',system,'','undefined')
@@ -94,7 +79,7 @@ class SLAQuery():
 
 		if subtypes!= None:
 			for subtype in subtypes:
-				data=[]
+				data={}
 				# 获取成功率
 				ratio_query = SLAQueryHelper.SLAQueryHelper('weiboMobileClientPerformance.getEveryDaySucc',system,version,subtype)
 				ratio = ratio_query.doRequest(Const.QUERY_TYPE_SUCCESSRATIO)				
@@ -103,13 +88,12 @@ class SLAQuery():
 				codes = codes_query.doRequest(Const.QUERY_TYPE_ERRORCODE)
 				parse_codes = self._parseErrorCode(codes)
 
-				data.append(self._parseSubtype(subtype))
-				data.append(100-ratio)
-				data.append(','.join(parse_codes))
+				data['subtype']=self._parseSubtype(subtype)
+				data['ratio']=100-ratio
+				data['errorcodes']=','.join(parse_codes)
+				result_data.append(data)
 
-				result.append(data)
-
-			result_data['data']=sorted(result,key=lambda x:x[1],reverse=True)
+			result_data=sorted(result_data,key=lambda x:(x.get('ratio', 0)),reverse=True)
 		return result_data
 
 	def _insertToExcel(self,data,platform):
@@ -130,9 +114,9 @@ class SLAQuery():
 	def doQuery(self,platform):
 		print 'do query ' + platform
 		result = self._startQuery(platform)
-		if len(result.get('data'))>0:
-			self._insertToExcel(result.get('data'),platform)
-		return result.get('version')
+		# if len(result.get('data'))>0:
+		# 	self._insertToExcel(result.get('data'),platform)
+		return result
 
 	def getPath(self,platform):
-		return self.getOutputPath(platform) + "sla_query.xlsx"
+		return Utils.getOutputPath(self.date,platform) + "sla_query.xlsx"
