@@ -73,18 +73,20 @@ class SLAQueryHelper(QueryParams.QueryParams):
 		return None
 
 	def _parseSuccessRatio(self,data):
-		result= None
+		result= {}
 		code = data['code']
-		if code == '2000':
-			lineData = data['data']['lineData']			
+		if code == '2000':	
+			# 目前仅解析一天的数据
 			if self.dayInterval==1:
+				lineData = data['data']['lineData']	
 				if lineData!= None:
-					result = lineData[0]['data'][0]
-			else:				
-				dataList=[]
-				for element in lineData:
-					dataList.append(element['data'])
-				result = dataList
+					result['ratio'] = lineData[0]['data'][0]
+				partData = data['data']['partData']
+				if partData!=None:
+					result['part'] = partData[0]['data'][0]
+				totalData = data['data']['totalData']
+				if totalData!=None:
+					result['total'] = totalData[0]['data'][0]
 		else:
 			print 'request sub_type error'
 		return result

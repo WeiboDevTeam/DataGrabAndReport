@@ -102,7 +102,7 @@ class WriteEmail(object):
 			data=data_list[i]			
 			td_subtype='<td>'+data.get('subtype')+'</td>'
 			ratio=data.get('ratio')
-			td_ratio='<td>'+str(ratio)+'</td>'
+			td_ratio='<td>'+str(ratio)+'%('+str(data.get('error_count'))+')'+'</td>'
 			td_reason='<td>'+data.get('errorcodes')+'</td>'				
 			td=td_num+td_subtype+td_ratio+td_reason
 			if ratio>10:
