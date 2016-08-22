@@ -17,8 +17,8 @@ class JiraCreator(object):
 	ISSUE_TYPE_ID = "1";
 	PRIORITY_ID = "3";
 	ES_CRASH_URL='''http://sla.weibo.cn:5601/app/kibana#/discover/New_Discover_mweibo_clent_crash?'''
-	ES_CRASH_QUERY_STRING ='''(filters:!((query:(match:(jsoncontent.reson:(query:'%s',type:phrase))))),query:(query_string:(analyze_wildcard:!t,query:'programname:mweibo_client_crash AND fingerprint:%s AND jsoncontent.from:%s')))'''
-	
+	ES_CRASH_ANDROID_QUERY_STRING ='''(filters:!((query:(match:(jsoncontent.reson:(query:'%s',type:phrase))))),query:(query_string:(analyze_wildcard:!t,query:'programname:mweibo_client_crash AND fingerprint:%s AND jsoncontent.from:%s')))'''
+	ES_CRASH_IOS_QUERY_STRING ='''(filters:query:(query_string:(analyze_wildcard:!t,query:'programname:mweibo_client_crash AND fingerprint:%s AND jsoncontent.from:%s')))'''
 
 	ISSUE_STATUS_OPEN = 1
 	SSUE_STATUS_IN_PROGRESS = 3
@@ -112,9 +112,9 @@ class JiraCreator(object):
 			return None
 		if isinstance(terms, (list, tuple)):
 			terms = ' '.join(terms)
-		issues = self.session.jira1.getIssuesFromTextSearchWithProject(self.auth, [project_key], terms, 3)
+		issues = self.session.jira1.getIssuesFromTextSearchWithProject(self.auth, [project_key], terms, 10)
 		if(issues != None and (len(issues) >	 0)):
-			return issues
+			return sorted(issues,key=lambda x:(x.get('duedate', 0)),reverse=True)
 		return None
 
 	def queryIssueById(self,issueId):
@@ -146,22 +146,31 @@ class JiraCreator(object):
 		self.session.jira1.updateIssue(self.auth,issue['key'],{'status':[issue['status']],'affectsVersions':affectsVersions})
 		time.sleep(1)
 
+	def addComment(self,issueKey,crashLogInfo):
+		if(self.checkSession() == False):
+			print 'please login first'
+			return None
+		else:
+			return self.session.jira1.addComment(self.auth,issueKey,self.createJiraComment(crashLogInfo))
+
+	def getComments(self,issueKey):
+		if(self.checkSession() == False):
+			print 'please login first'
+			return None
+		else:
+			return self.session.jira1.getComments(self.auth,issueKey)
+
 	def createJiraSummary(self, crashLogInfo):
-		summary = "crash by:"+crashLogInfo['reason']
+		summary = "crash by:"+self.__getCrashReason(crashLog)
 		if(len(summary) > 255):
 			return summary[0:255]
 		else:
 			return summary
 
-	def createJiraDesc(self,crashLog):
-		#将单引号替换成'!\''
+	def createJiraDesc(self,crashLog):		
 		print "createJiraDesc"
-		replacedReson = re.sub('\'','!\'',crashLog.get('reason'))
-		es_query = JiraCreator.ES_CRASH_QUERY_STRING % (replacedReson, crashLog.get('fingerprint'),crashLog.get('fromvalue'))
-		es_query_body = {'_g':'(time:(from:now-12h,to:now))','_a':es_query}
-		es_query_url = JiraCreator.ES_CRASH_URL+urllib.urlencode(es_query_body)
 		desc = "log fingerprint: "+crashLog.get('jira_query_key')
-		desc = desc + "\nsearch in kibana :"+ es_query_url + \
+		desc = desc + "\nsearch in kibana :"+ self.__buildESQueryUrl(crashLog) + \
 		"\nin version:"+crashLog.get('fromvalue')+"\n"+crashLog.get('jsonlog')
 
 		if(crashLog.get('uid') != None):
@@ -170,3 +179,32 @@ class JiraCreator(object):
 			desc = desc+"\ncrash count: " + str(crashLog.get('counts'))
 		print desc
 		return desc
+
+	#构建jira备注信息
+	def createJiraComment(self,crashLog):
+		comment = "search in kibana :"+ self.__buildESQueryUrl(crashLog) + \
+		"\nin version:"+crashLog.get('fromvalue')
+		if(crashLog.get('counts') != None):
+			comment = comment+"\ncrash count: " + str(crashLog.get('counts'))
+		return comment
+	
+	#构建es查询地址
+	def __buildESQueryUrl(self,crashLog):
+		fromvalue = crashLog.get('fromvalue')
+		if(fromvalue.endswith('5010')):
+			#将单引号替换成'!\''
+			replacedReson = re.sub('\'','!\'',crashLog.get('reason'))
+			es_query = JiraCreator.ES_CRASH_ANDROID_QUERY_STRING % (replacedReson, crashLog.get('fingerprint'),crashLog.get('fromvalue'))
+		else:
+			es_query = JiraCreator.ES_CRASH_IOS_QUERY_STRING % (crashLog.get('fingerprint'),crashLog.get('fromvalue'))
+		es_query_body = {'_g':'(time:(from:now-24h,to:now))','_a':es_query}
+		es_query_url = JiraCreator.ES_CRASH_URL+urllib.urlencode(es_query_body)
+		return es_query_url
+
+	#ios crash原因并不是直接用的es返回的结果，本地做过处理，所以在summary中展示的是处理过的原因，在es查询url中用到的是es返回的reason
+	def __getCrashReason(self,crashLog):
+		reason = crashLog.get('real_reason')
+		if(reason == None):
+			reason = crashLog.get('reason')
+		return reason
+		

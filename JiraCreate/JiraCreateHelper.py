@@ -123,6 +123,8 @@ class JiraCreateHelper(object):
  						query = fingerprint
  					else:
  						query = JiraCreateHelper.getEsMd5(log)
+ 						crashLogInfo['real_reason']=log.split("\n")[0]
+ 				print query
  				crashLogInfo['jira_query_key']=query
 				issues = jiraCreator.queryJiraIssue(projectKey,query)
 				if(issues == None):
@@ -133,19 +135,38 @@ class JiraCreateHelper(object):
 						print "create jira"
 				else:
 					find = False
-					if(isAndroid):
-						for issue in issues:
-							# 检查版本是否一致
-							description = issue['description']
-							index = description.find(fromvalue)
-							if(index!=-1):
-								find=True
-								issueFind = issue
-								print description
-								break
-					else:
-						find = True
-						issueFind = issues[0]
+					# if(isAndroid):
+					for issue in issues:
+						# 检查版本是否一致
+						description = issue['description']
+						index = description.find(fromvalue)
+						print description, JiraCreateHelper.JIRA_STATUS[issue['status']]
+						if(index!=-1):
+							find=True
+							issueFind = issue
+							print description
+							break
+						elif(issue['status'] == u'1' or issue['status'] == u'3'):
+							find = True
+							issueFind = issue
+							print description
+							comments = jiraCreator.getComments(issue['key'])
+							needComment = True
+							for comment in comments:
+								if(comment.get('author') == u'guizhong'):
+									body = comment.get('body')
+									print "comment:"+body
+									if(body.find(fromvalue)>=0):
+										needComment = False
+										break	
+							if(needComment):
+								jiraCreator.addComment(issue['key'],crashLogInfo)
+							break
+						else:
+							continue
+					# else:
+					# 	find = True
+					# 	issueFind = issues[0]
 					print 'already create jira :'+str(find)
 					if(find):
 						findversion = False
