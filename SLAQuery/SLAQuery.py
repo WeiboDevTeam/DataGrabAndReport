@@ -89,7 +89,8 @@ class SLAQuery():
 				parse_codes = self._parseErrorCode(codes)
 
 				data['subtype']=self._parseSubtype(subtype)
-				data['ratio']=100-ratio
+				data['ratio']=100-ratio.get('ratio')
+				data['error_count']=ratio.get('total')-ratio.get('part')
 				data['errorcodes']=','.join(parse_codes)
 				result_data.append(data)
 
