@@ -88,7 +88,7 @@ class SLAQueryHelper(QueryParams.QueryParams):
 				if totalData!=None:
 					result['total'] = totalData[0]['data'][0]
 		else:
-			print 'request sub_type error'
+			print 'request SuccessRatio error'
 		return result
 
 
